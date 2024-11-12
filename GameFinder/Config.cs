@@ -1,6 +1,6 @@
 ﻿using System.Windows.Documents;
 
-namespace GameFinderApi;
+namespace GameFinder;
 
 public static class Config
 {

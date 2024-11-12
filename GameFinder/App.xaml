@@ -1,7 +1,7 @@
-﻿<Application x:Class="GameFinderApi.App"
+﻿<Application x:Class="GameFinder.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:GameFinderApi"
+             xmlns:local="clr-namespace:GameFinder"
              Startup="Application_Startup"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     

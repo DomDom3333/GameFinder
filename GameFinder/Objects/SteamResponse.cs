@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace GameFinderApi.Objects;
+namespace GameFinder.Objects;
 
 public class SteamGameResponse
 {

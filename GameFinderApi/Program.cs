@@ -1,4 +1,4 @@
-namespace GameFinderApi;
+namespace GameFinder;
 
 public class Program
 {

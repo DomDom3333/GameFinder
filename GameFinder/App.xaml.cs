@@ -8,12 +8,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Web;
 using System.Windows;
-using GameFinderApi.Objects;
+using GameFinder.Objects;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using Cookie = OpenQA.Selenium.Cookie;
 
-namespace GameFinderApi;
+namespace GameFinder;
 
 /// <summary>
 /// Interaction logic for App.xaml

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 
-namespace GameFinderApi
+namespace GameFinder
 {
     public class MatchingHub : Hub
     {

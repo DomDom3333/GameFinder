@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 
-namespace GameFinderApi;
+namespace GameFinder;
 
 public class ApiHandler
 {

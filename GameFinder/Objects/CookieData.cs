@@ -1,6 +1,6 @@
 ﻿using OpenQA.Selenium;
 
-namespace GameFinderApi.Objects;
+namespace GameFinder.Objects;
 
 public class CookieData
 {

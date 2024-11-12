@@ -1,12 +1,12 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using GameFinderApi.Objects;
+using GameFinder.Objects;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
-namespace GameFinderApi.Controllers
+namespace GameFinder.Controllers
 {
     [ApiController]
     [Route("[controller]/{id}")]
