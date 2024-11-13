@@ -14,6 +14,9 @@ namespace GameFinder
 
         // To store user connections and their game lists
         private static readonly ConcurrentDictionary<string, HashSet<string>> UserGames = new();
+        
+        // To store Sessions and their Admins
+        private static readonly ConcurrentDictionary<string, HashSet<string>> Admins = new();
 
         public override Task OnConnectedAsync()
         {
@@ -35,27 +38,61 @@ namespace GameFinder
         public async Task CreateSession()
         {
             string sessionCode = GenerateSessionCode();
-            Sessions.TryAdd(sessionCode, new Session());
+            while (!Sessions.TryAdd(sessionCode, new Session()))
+            {
+                sessionCode = GenerateSessionCode();
+            }
             await Clients.Client(Context.ConnectionId).SendAsync("SessionCreated", sessionCode);
         }
 
-        public async Task JoinSession(string sessionCode, List<string> gameList)
+        public async Task JoinSession(string sessionCode, string username, List<string> gameList)
         {
             if (Sessions.TryGetValue(sessionCode, out Session? session))
             {
+                bool isAdmin = !session.Users.Any();
+                if (isAdmin)
+                {
+                    Admins.TryAdd(username, new HashSet<string>());
+                }
+
                 session.Users.Add(Context.ConnectionId);
-                await Clients.Client(Context.ConnectionId).SendAsync("JoinedSession", sessionCode);
 
                 // Store user's game list
                 UserGames[Context.ConnectionId] = new HashSet<string>(gameList);
 
                 // Notify other members if necessary
-                await Clients.Group(sessionCode).SendAsync("UserJoined", Context.ConnectionId);
+                await Clients.Group(sessionCode).SendAsync("JoinedSession", username, isAdmin);
                 await Groups.AddToGroupAsync(Context.ConnectionId, sessionCode);
+                foreach (string sessionUser in session.Users)
+                {
+                    if (username == sessionUser)
+                    {
+                        continue;
+                    }
+                    await Clients.Caller.SendAsync("JoinedSession", sessionUser, Admins.ContainsKey(sessionUser));
+                }
             }
             else
             {
                 await Clients.Client(Context.ConnectionId).SendAsync("Error", "Session does not exist");
+            }
+        }
+
+        public async Task LeaveSession(string sessionCode, string username)
+        {
+            if (Sessions.TryGetValue(sessionCode, out Session? session))
+            {
+                if (UserGames.TryRemove(Context.ConnectionId, out _))
+                {
+                    session.Users.Remove(Context.ConnectionId);
+                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
+                    await Clients.Client(Context.ConnectionId).SendAsync("LeaveSession", username);
+                }
+
+                if (!session.Users.Any())
+                {
+                    Sessions.TryRemove(sessionCode, out _);
+                }
             }
         }
 

@@ -83,7 +83,7 @@ public partial class Swiping : UserControl
                 }
             }
 
-            MessageBox.Show("No more game profiles to show.");
+            //MessageBox.Show("No more game profiles to show.");
             return null;
         }
 

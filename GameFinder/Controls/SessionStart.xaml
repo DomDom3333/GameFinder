@@ -10,6 +10,16 @@
         <StackPanel Orientation="Vertical" 
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
+            <TextBox
+                x:Name="DisplaynameBox"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Margin="5" 
+                BorderBrush="Gray"
+                HorizontalContentAlignment="Stretch" 
+                Text="Your Display-name"
+                GotFocus="DisplaynameBox_OnGotFocus"
+                LostFocus="DisplaynameBox_OnLostFocus"/>
             <Button 
                 HorizontalAlignment="Center" 
                 VerticalAlignment="Center"
@@ -25,12 +35,15 @@
                 Background="LightCoral"
                 Click="JoinSession_OnClick"/>
             <TextBox
+                x:Name="SessionCodeBox"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Margin="5" 
                 BorderBrush="Gray"
                 HorizontalContentAlignment="Stretch" 
-                Text="_ _ _ _"/>
+                Text="_ _ _ _"
+                GotFocus="SessionCodeBox_OnGotFocus"
+                LostFocus="SessionCodeBox_OnLostFocus"/>
         </StackPanel>
     </Grid>
 </UserControl>
