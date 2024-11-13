@@ -1,11 +1,205 @@
-﻿using System.Windows.Controls;
+﻿using System.ComponentModel;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Web;
+using System.Windows;
+using System.Windows.Controls;
+using GameFinder.Objects;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
+using Cookie = OpenQA.Selenium.Cookie;
 
-namespace GameFinder.Controls;
-
-public partial class Tabs : UserControl
+namespace GameFinder.Controls
 {
-    public Tabs()
+    public partial class Tabs : UserControl, INotifyPropertyChanged
     {
-        InitializeComponent();
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private bool _isLoggedIn;
+
+        public bool IsLoggedIn
+        {
+            get => _isLoggedIn;
+            set
+            {
+                if (_isLoggedIn != value)
+                {
+                    _isLoggedIn = value;
+                    OnPropertyChanged(nameof(IsLoggedIn));
+                }
+            }
+        }
+        
+        readonly string SteamLoginUrl = "https://store.steampowered.com/login/";
+        readonly string cookiesFilePath = "cookies.json";
+        readonly string UserDataUrl = "https://store.steampowered.com/dynamicstore/userdata/";
+
+        public Tabs()
+        {
+            InitializeComponent();
+        }
+
+        public async override void EndInit()
+        {
+            base.EndInit();
+            IsLoggedIn = await TryGetGameListAsync();
+        }
+
+        private void ShowLogin()
+        {
+            IReadOnlyCollection<Cookie> cookies = PromptUserToLogin();
+            SaveCookies(cookiesFilePath, cookies);
+        }
+
+        private void LoginButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            ShowLogin();
+        }
+
+        private async Task<bool> TryGetGameListAsync()
+        {
+            try
+            {
+                if (!File.Exists(cookiesFilePath))
+                {
+                    return false;
+                }
+                
+                IReadOnlyCollection<Cookie>? cookies = LoadCookies(cookiesFilePath);
+                if (cookies == null)
+                {
+                    return false;
+                }
+                
+                string jsonResponse = await FetchJsonResponseWithCookies(cookies);
+                
+                List<string> ownedPackages = ParseOwnedPackages(jsonResponse);
+                if (ownedPackages.Count < 1)
+                {
+                    return false;
+                }
+
+                Config.GameList = ownedPackages;
+                return true;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return false;
+            }
+        }
+
+        private IReadOnlyCollection<Cookie> PromptUserToLogin()
+        {
+            using ChromeDriver driver = new ChromeDriver();
+            try
+            {
+                driver.Navigate().GoToUrl(SteamLoginUrl);
+
+                //Wait for user to log in
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromMinutes(2));
+                wait.Until(drv => drv.Url != SteamLoginUrl || drv.FindElements(By.Id("SpecificElementAfterLogin")).Count > 0);
+
+                return driver.Manage().Cookies.AllCookies;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return null;
+            }
+            finally
+            {
+                SaveCookies(cookiesFilePath, driver.Manage().Cookies.AllCookies);
+                driver.Quit();
+            }
+        }
+
+        async Task<string> FetchJsonResponseWithCookies(IReadOnlyCollection<Cookie> cookies)
+        {
+            Uri baseUri = new Uri(UserDataUrl);
+            using HttpClientHandler handler = new HttpClientHandler { CookieContainer = new CookieContainer() };
+
+            foreach (Cookie cookie in cookies)
+            {
+                handler.CookieContainer.Add(baseUri, new System.Net.Cookie(
+                    cookie.Name, HttpUtility.UrlEncode(cookie.Value, Encoding.UTF8), cookie.Path, cookie.Domain)
+                );
+            }
+
+            using HttpClient client = new HttpClient(handler);
+            return await client.GetStringAsync(baseUri);
+        }
+
+        List<string> ParseOwnedPackages(string jsonResponse)
+        {
+            List<string> ownedPackagesList = new List<string>();
+            JsonNode? json = JsonNode.Parse(jsonResponse)?["rgOwnedApps"];
+            if (json is JsonArray packages)
+            {
+                foreach (JsonNode? package in packages)
+                {
+                    ownedPackagesList.Add(package.ToString());
+                }
+            }
+
+            return ownedPackagesList;
+        }
+
+        static void SaveCookies(string path, IReadOnlyCollection<Cookie> cookies)
+        {
+            List<CookieData> cookieDataList = cookies.Select(cookie => new CookieData(cookie)).ToList();
+            string json = JsonSerializer.Serialize(cookieDataList, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(path, json);
+        }
+
+        static IReadOnlyCollection<Cookie>? LoadCookies(string path)
+        {
+            if (!File.Exists(path)) return null;
+
+            string json = File.ReadAllText(path);
+            List<CookieData>? cookieDataList = JsonSerializer.Deserialize<List<CookieData>>(json);
+
+            return cookieDataList?.Select(cookieData => cookieData.ToSeleniumCookie()).ToList();
+        }
+
+        private async void RefreshButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            var cookies = LoadCookies(cookiesFilePath);
+            if (cookies == null)
+            {
+                throw new Exception("Failed to retrieve valid data. Please log into Steam.");
+            }
+            string jsonResponse = await FetchJsonResponseWithCookies(cookies);
+            List<string> ownedPackages = ParseOwnedPackages(jsonResponse);
+            Config.GameList = ownedPackages;
+            
+            IsLoggedIn = ownedPackages.Count > 0;
+        }
+        
+        
+        private void ShowSessionStart()
+        {
+            SessionContentControl.Content = new SessionStart();
+        }
+
+        public void ShowSessionLobby()
+        {
+            SessionContentControl.Content = new SessionLobby();
+        }
+
+        public void ShowSwiping()
+        {
+            SessionContentControl.Content = new Swiping();
+        }
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

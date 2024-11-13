@@ -12,7 +12,6 @@
     <Grid Background="#FFEFEFEF">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
             <selfmade:Tabs/>
     </Grid>

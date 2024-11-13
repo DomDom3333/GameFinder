@@ -5,8 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:selfmade="clr-namespace:GameFinder.Controls"
              mc:Ignorable="d"
-             d:DesignHeight="300" d:DesignWidth="600
-             ">
+             d:DesignHeight="300" d:DesignWidth="600">
     <Grid Background="Black">
         <TabControl>
             <TabItem>
@@ -18,17 +17,28 @@
                 </TabItem.Header>
                 <StackPanel Orientation="Vertical" Margin="10">
                     <TextBlock FontSize="18" FontWeight="Heavy" Padding="5">Login instructions</TextBlock>
-                    <TextBlock TextWrapping="Wrap">Click the login button. It will open a web browser with the Steam login page.Log in and DO NOT CLOSE THE BROWSER YET!</TextBlock>
+                    <TextBlock TextWrapping="Wrap">Click the login button. It will open a web browser with the Steam login page. Log in and DO NOT CLOSE THE BROWSER YET!</TextBlock>
                     <TextBlock TextWrapping="Wrap">Once you have logged in, click the refresh button. Once the login has been verified, you can close the web browser</TextBlock>
                     
                     <StackPanel Orientation="Vertical" Margin="5">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Margin="10">Login Status:</TextBlock>
-                            <Ellipse Width="20" Height="20" Fill="Red" Margin="10"></Ellipse>
+                            <Ellipse Width="20" Height="20" Margin="10">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="Red"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsLoggedIn}" Value="True">
+                                                <Setter Property="Fill" Value="Green"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <Button Margin="10">Login</Button>
-                            <Button Margin="10">Refresh</Button>
+                            <Button Margin="10" Click="LoginButton_OnClick">Login</Button>
+                            <Button Margin="10" Click="RefreshButton_OnClick">Refresh</Button>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
@@ -41,7 +51,7 @@
                     </StackPanel>
                 </TabItem.Header>
                 <TabItem.Content>
-                    <selfmade:SessionStart/>
+                    <ContentControl x:Name="SessionContentControl"></ContentControl>
                 </TabItem.Content>
             </TabItem>
             <TabItem>
@@ -53,6 +63,5 @@
                 </TabItem.Header>
             </TabItem>
         </TabControl>
-
     </Grid>
 </UserControl>
