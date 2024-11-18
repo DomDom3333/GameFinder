@@ -43,6 +43,7 @@ namespace GameFinder
                 sessionCode = GenerateSessionCode();
             }
             await Clients.Client(Context.ConnectionId).SendAsync("SessionCreated", sessionCode);
+            Console.WriteLine($"Session created with code: {sessionCode}");
         }
 
         public async Task JoinSession(string sessionCode, string username, List<string> gameList)
@@ -59,7 +60,9 @@ namespace GameFinder
 
                 // Store user's game list
                 UserGames[Context.ConnectionId] = new HashSet<string>(gameList);
-
+                
+                Console.WriteLine($"User {username} joined session {sessionCode}");
+                
                 // Notify other members if necessary
                 await Clients.Group(sessionCode).SendAsync("JoinedSession", username, isAdmin);
                 await Groups.AddToGroupAsync(Context.ConnectionId, sessionCode);
@@ -104,7 +107,9 @@ namespace GameFinder
                 HashSet<string> commonGames = session.Users
                     .Where(UserGames.ContainsKey)
                     .Select(connId => UserGames[connId])
-                    .Aggregate((previousList, nextList) => new HashSet<string>(previousList.Intersect(nextList)));
+                    .Aggregate((previousList, nextList) => 
+                        new HashSet<string>(previousList.Intersect(nextList)
+                            .OrderBy(x => Guid.NewGuid()))); // Randomize the order of games
 
                 session.CommonGames = commonGames;
                 await Clients.Group(sessionCode).SendAsync("SessionStarted", commonGames);

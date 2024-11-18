@@ -98,7 +98,7 @@ namespace GameFinder
         
         public async Task LeaveSessionAsync(string username)
         {
-            if (Connection != null) await Connection.InvokeAsync("LeaveSession", username);
+            if (Connection != null) await Connection.InvokeAsync("LeaveSession", SessionId, username);
         }
 
         public async Task StartSession(string sessionCode)

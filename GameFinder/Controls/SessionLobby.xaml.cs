@@ -6,18 +6,22 @@ namespace GameFinder.Controls
 {
     public partial class SessionLobby : UserControl
     {
-        private ObservableCollection<string> _users;
-        private ObservableCollection<string> _admins;
+        private ObservableCollection<string> _users = new ObservableCollection<string>();
+        private ObservableCollection<string> _admins = new ObservableCollection<string>();
         private bool _isAdmin = false;
         private string _currentUser;
+        public event EventHandler<string> StartButtonClicked;
+
 
         public SessionLobby()
         {
             InitializeComponent();
+            DataContext = this;
             _users = new ObservableCollection<string>();
             UsersListBox.ItemsSource = _users;
             
             SetCurrentUser(Config.Username);
+            AddUser(Config.Username);
             App.Api.UserJoinedSession += AddUser;
             App.Api.UserLeftSession += RemoveUser;
         }
@@ -37,8 +41,8 @@ namespace GameFinder.Controls
             }
             if (!_users.Contains(username))
             {
-                _users.Add(username);
-                _admins.Add(username);
+                Dispatcher.Invoke(() => _users.Add(username));
+                Dispatcher.Invoke(() => _admins.Add(username));
             }
         }
 
@@ -47,12 +51,12 @@ namespace GameFinder.Controls
         {
             if (_users.Contains(username))
             {
-                _users.Remove(username);
+                Dispatcher.Invoke(() => _users.Remove(username));
             }
 
             if (_admins.Contains(username))
             {
-                _users.Remove(username);
+                Dispatcher.Invoke(() => _users.Remove(username));
             }
         }
 
@@ -61,14 +65,14 @@ namespace GameFinder.Controls
             if (!string.IsNullOrEmpty(_currentUser))
             {
                 await App.Api.LeaveSessionAsync(_currentUser);
-                // TODO: Navigation back to start/join screen
+                StartButtonClicked?.Invoke(this, "LeaveButton");
             }
         }
 
         private async void StartButton_OnClick(object sender, RoutedEventArgs e)
         {
             await App.Api.StartSession(App.Api.SessionId);
-            // TODO: Navigate to Swiping page
+            StartButtonClicked?.Invoke(this, "StartButton");
         }
     }
 }

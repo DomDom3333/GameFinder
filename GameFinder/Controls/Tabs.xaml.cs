@@ -42,12 +42,15 @@ namespace GameFinder.Controls
         public Tabs()
         {
             InitializeComponent();
+            DataContext = this;
+            ShowSessionStart();
         }
 
         public async override void EndInit()
         {
             base.EndInit();
             IsLoggedIn = await TryGetGameListAsync();
+            Console.WriteLine($"Owned packages: {Config.GameList.Count}");
         }
 
         private void ShowLogin()
@@ -177,28 +180,56 @@ namespace GameFinder.Controls
             string jsonResponse = await FetchJsonResponseWithCookies(cookies);
             List<string> ownedPackages = ParseOwnedPackages(jsonResponse);
             Config.GameList = ownedPackages;
+            Console.WriteLine($"Retrieved {ownedPackages.Count} owned packages.");
             
             IsLoggedIn = ownedPackages.Count > 0;
         }
         
         
-        private void ShowSessionStart()
+        internal void ShowSessionStart()
         {
-            SessionContentControl.Content = new SessionStart();
+            var sessionStartControl = new SessionStart();
+            // Subscribe to SessionButtonClicked event
+            sessionStartControl.SessionButtonClicked += OnSessionButtonClicked;
+            SessionContentControl.Content = sessionStartControl;
+        }
+        
+        private void OnSessionButtonClicked(object? sender, string action)
+        {
+            // Handle different actions
+            if (action == "StartNewSession")
+            {
+                ShowSessionLobby();
+            }
+            else if (action == "JoinSession")
+            {
+                ShowSessionLobby();
+            }
+            else if (action == "StartButton")
+            {
+                ShowSwiping();
+            }
+            else if (action == "LeaveButton")
+            {
+                ShowSessionStart();
+            }
         }
 
-        public void ShowSessionLobby()
+        internal void ShowSessionLobby()
         {
-            SessionContentControl.Content = new SessionLobby();
+            var sessionLobbyCotrol = new SessionLobby();
+            sessionLobbyCotrol.StartButtonClicked += OnSessionButtonClicked;
+            SessionContentControl.Content = sessionLobbyCotrol;
         }
 
-        public void ShowSwiping()
+        internal void ShowSwiping()
         {
             SessionContentControl.Content = new Swiping();
         }
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
+            Console.WriteLine($"PropertyChanged: {propertyName}");
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }

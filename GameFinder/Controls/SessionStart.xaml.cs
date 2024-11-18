@@ -6,6 +6,8 @@ namespace GameFinder.Controls;
 
 public partial class SessionStart : UserControl
 {
+    public event EventHandler<string>? SessionButtonClicked;
+
     public SessionStart()
     {
         InitializeComponent();
@@ -17,13 +19,17 @@ public partial class SessionStart : UserControl
         {
             MessageBox.Show("Please enter a valid Username", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+        // Create session...
         await App.Api.CreateSessionAsync();
         while (string.IsNullOrWhiteSpace(App.Api.SessionId))
         {
             await Task.Delay(200);
         }
-
+        // Join session...
         await App.Api.JoinSessionAsync(App.Api.SessionId, Config.Username, Config.GameList);
+        
+        // Notify Tabs control about the button click event
+        SessionButtonClicked?.Invoke(this, "StartNewSession");
     }
 
     private async void JoinSession_OnClick(object sender, RoutedEventArgs e)
@@ -38,7 +44,11 @@ public partial class SessionStart : UserControl
             MessageBox.Show("Please enter a valid Username", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         
+        // Join session...
         await App.Api.JoinSessionAsync(SessionCodeBox.Text, Config.Username, Config.GameList);
+        
+        // Notify Tabs control about the button click event
+        SessionButtonClicked?.Invoke(this, "JoinSession");
     }
 
     private void SessionCodeBox_OnGotFocus(object sender, RoutedEventArgs e)
