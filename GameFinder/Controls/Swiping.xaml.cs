@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using GameFinder.Helpers;
 using GameFinder.Objects;
 using Microsoft.VisualBasic;
 
@@ -94,12 +95,12 @@ public partial class Swiping : UserControl
             try
             {
                 Console.WriteLine($"Displaying game details for: {game.Name}");
-                GameNameTextBlock.Text = game.Name;
+                GameNameTextBlock.SafeInvoke(() => GameNameTextBlock.Text = game.Name);
                 DescriptionTextBlock.Text = game.ShortDescription;
                 GameImage.Source = new BitmapImage(new Uri(game.HeaderImage));
                 GenresTextBlock.Text = string.Join(", ", game.Genres.Select(genre => genre.Description));
                 LanguagesTextBlock.Text = game.SupportedLanguages?.Replace(",", ", ");
-                PriceTextBlock.Text = game?.Recomendations?.Total.ToString();
+                PriceTextBlock.Text = game?.Recommendations?.Total.ToString();
             }
             catch (Exception ex)
             {

@@ -6,8 +6,6 @@ using System.Text.Json.Nodes;
 using System.Web;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Edge;
-using OpenQA.Selenium.Firefox;
 using Cookie = OpenQA.Selenium.Cookie;
 
 class Program
@@ -18,45 +16,52 @@ class Program
 
     static async Task Main(string[] args)
     {
-        IWebDriver driver = new ChromeDriver(); // Set default browser as Chrome
+        IReadOnlyCollection<Cookie> cookies = await GetCookiesAsync();
+        if (cookies is null)
+        {
+            Console.WriteLine("Failed to obtain cookies.");
+            return;
+        }
 
-        IReadOnlyCollection<Cookie>? cookies = LoadCookies(cookiesFilePath);
+        await ProcessSteamDataAsync(cookies);
+    }
+
+    static async Task<IReadOnlyCollection<Cookie>> GetCookiesAsync()
+    {
+        IWebDriver driver = new ChromeDriver(); // Default browser is Chrome
+        IReadOnlyCollection<Cookie> cookies = LoadCookies(cookiesFilePath);
         if (cookies == null)
         {
             cookies = await PromptUserToLogin(driver);
         }
+        else
+        {
+            driver.Quit();
+        }
+        return cookies;
+    }
 
+    static async Task ProcessSteamDataAsync(IReadOnlyCollection<Cookie> cookies)
+    {
         try
         {
             string jsonResponse = await FetchJsonResponseWithCookies(cookies);
-            JsonNode? json = JsonNode.Parse(jsonResponse);
-            JsonNode? rgOwnedPackages = json?["rgOwnedPackages"];
-
-            if (rgOwnedPackages is JsonArray packages && packages.Count > 0)
+            if (IsValidData(jsonResponse))
             {
-                string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                    "steam_data.json");
-                await File.WriteAllTextAsync(filePath, jsonResponse);
-                Console.WriteLine($"JSON data has been saved to: {filePath}");
+                SaveDataToFile(jsonResponse);
             }
             else
             {
                 Console.WriteLine("Failed to retrieve valid data. Please log into Steam.");
-                cookies = await PromptUserToLogin(driver);
+                cookies = await PromptUserToLogin(new ChromeDriver());
                 jsonResponse = await FetchJsonResponseWithCookies(cookies);
-                json = JsonNode.Parse(jsonResponse);
-                rgOwnedPackages = json?["rgOwnedPackages"];
-
-                if (rgOwnedPackages is JsonArray secondAttemptPackages && secondAttemptPackages.Count > 0)
+                if (IsValidData(jsonResponse))
                 {
-                    string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                        "steam_data.json");
-                    await File.WriteAllTextAsync(filePath, jsonResponse);
-                    Console.WriteLine($"JSON data has been saved to: {filePath}");
+                    SaveDataToFile(jsonResponse);
                 }
                 else
                 {
-                    Console.WriteLine("Failed to retrieve valid data even after log in. Please try again later.");
+                    Console.WriteLine("Failed to retrieve valid data even after login. Please try again later.");
                 }
             }
         }
@@ -64,6 +69,20 @@ class Program
         {
             Console.WriteLine("An error occurred: " + ex.Message);
         }
+    }
+
+    static bool IsValidData(string jsonResponse)
+    {
+        JsonNode? json = JsonNode.Parse(jsonResponse);
+        JsonNode? rgOwnedPackages = json?["rgOwnedPackages"];
+        return (rgOwnedPackages is JsonArray packages && packages.Count > 0);
+    }
+
+    static void SaveDataToFile(string jsonResponse)
+    {
+        string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "steam_data.json");
+        File.WriteAllText(filePath, jsonResponse);
+        Console.WriteLine($"JSON data has been saved to: {filePath}");
     }
 
     static async Task<IReadOnlyCollection<Cookie>> PromptUserToLogin(IWebDriver driver)
@@ -74,7 +93,7 @@ class Program
             Console.WriteLine("Press Enter after you have successfully logged in.");
             Console.ReadLine();
 
-            ReadOnlyCollection<Cookie>? cookies = driver.Manage().Cookies.AllCookies;
+            ReadOnlyCollection<Cookie> cookies = driver.Manage().Cookies.AllCookies;
             SaveCookies(cookiesFilePath, cookies);
             return cookies;
         }
@@ -85,7 +104,7 @@ class Program
         }
         finally
         {
-            driver?.Quit();
+            driver.Quit();
         }
     }
 
@@ -97,8 +116,7 @@ class Program
         foreach (Cookie cookie in cookies)
         {
             string encodedValue = HttpUtility.UrlEncode(cookie.Value, Encoding.UTF8);
-            handler.CookieContainer.Add(baseUri,
-                new System.Net.Cookie(cookie.Name, encodedValue, cookie.Path, cookie.Domain));
+            handler.CookieContainer.Add(baseUri, new System.Net.Cookie(cookie.Name, encodedValue, cookie.Path, cookie.Domain));
         }
 
         using HttpClient client = new HttpClient(handler);
@@ -107,20 +125,12 @@ class Program
 
     static void SaveCookies(string path, IReadOnlyCollection<Cookie> cookies)
     {
-        List<CookieData> cookieDataList = new List<CookieData>();
-        foreach (Cookie cookie in cookies)
-        {
-            cookieDataList.Add(new CookieData(cookie));
-        }
-
-        string json = JsonSerializer.Serialize(cookieDataList, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
+        var cookieDataList = cookies.Select(cookie => new CookieData(cookie)).ToList();
+        string json = JsonSerializer.Serialize(cookieDataList, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(path, json);
     }
 
-    static IReadOnlyCollection<Cookie>? LoadCookies(string path)
+    static IReadOnlyCollection<Cookie> LoadCookies(string path)
     {
         if (!File.Exists(path))
         {
@@ -133,18 +143,13 @@ class Program
             return null;
         }
 
-        List<CookieData>? cookieDataList = JsonSerializer.Deserialize<List<CookieData>>(json);
+        List<CookieData> cookieDataList = JsonSerializer.Deserialize<List<CookieData>>(json);
         if (cookieDataList == null)
         {
             return null;
         }
 
-        List<Cookie> cookies = new List<Cookie>();
-        foreach (CookieData cookieData in cookieDataList)
-        {
-            cookies.Add(cookieData.ToSeleniumCookie());
-        }
-
+        List<Cookie> cookies = cookieDataList.Select(cookieData => cookieData.ToSeleniumCookie()).ToList();
         return cookies;
     }
 }
@@ -160,9 +165,7 @@ public class CookieData
     public bool HttpOnly { get; set; }
     public string SameSite { get; set; }
 
-    public CookieData()
-    {
-    }
+    public CookieData() { }
 
     public CookieData(Cookie cookie)
     {

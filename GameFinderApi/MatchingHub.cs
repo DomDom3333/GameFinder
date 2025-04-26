@@ -18,20 +18,33 @@ namespace GameFinder
         // To store Sessions and their Admins
         private static readonly ConcurrentDictionary<string, HashSet<string>> Admins = new();
 
+        // Add a mapping between ConnectionId and Username
+        private static readonly ConcurrentDictionary<string, string> ConnectionUserMapping = new();
+
         public override Task OnConnectedAsync()
         {
             return base.OnConnectedAsync();
         }
 
+        // 2. Remove user mapping and update admin on disconnect/leave
         public override Task OnDisconnectedAsync(Exception? exception)
         {
-            // Remove user from all sessions they are part of
-            foreach (Session session in Sessions.Values)
+            // Get the username from the mapping
+            if (ConnectionUserMapping.TryRemove(Context.ConnectionId, out string username))
             {
-                session.Users.Remove(Context.ConnectionId);
+                // Remove from all sessions
+                foreach (Session session in Sessions.Values)
+                {
+                    session.Users.Remove(Context.ConnectionId);
+                }
+                // Remove from user games
+                UserGames.TryRemove(Context.ConnectionId, out _);
+                // Remove from admins if needed
+                if (Admins.ContainsKey(username))
+                {
+                    Admins.TryRemove(username, out _);
+                }
             }
-
-            UserGames.TryRemove(Context.ConnectionId, out _);
             return base.OnDisconnectedAsync(exception);
         }
 
@@ -50,30 +63,29 @@ namespace GameFinder
         {
             if (Sessions.TryGetValue(sessionCode, out Session? session))
             {
-                bool isAdmin = !session.Users.Any();
+                // Determine if this user will be admin (first user in the session)
+                bool isAdmin = session.Users.Count == 0;
                 if (isAdmin)
                 {
+                    // Use the username as key for admin collection
                     Admins.TryAdd(username, new HashSet<string>());
                 }
-
+                // Store the mapping: connection id to user name
+                ConnectionUserMapping[Context.ConnectionId] = username;
                 session.Users.Add(Context.ConnectionId);
 
                 // Store user's game list
                 UserGames[Context.ConnectionId] = new HashSet<string>(gameList);
-                
+
                 Console.WriteLine($"User {username} joined session {sessionCode}");
-                
-                // Notify other members if necessary
-                await Clients.Group(sessionCode).SendAsync("JoinedSession", username, isAdmin);
+
+                // Add the connection to the group immediately.
                 await Groups.AddToGroupAsync(Context.ConnectionId, sessionCode);
-                foreach (string sessionUser in session.Users)
-                {
-                    if (username == sessionUser)
-                    {
-                        continue;
-                    }
-                    await Clients.Caller.SendAsync("JoinedSession", sessionUser, Admins.ContainsKey(sessionUser));
-                }
+
+                // Notify the caller about their join and also notify the group about the new user.
+                await Clients.Client(Context.ConnectionId).SendAsync("JoinedSession", username, isAdmin);
+                await Clients.GroupExcept(sessionCode, Context.ConnectionId)
+                    .SendAsync("JoinedSession", username, isAdmin);
             }
             else
             {
@@ -85,13 +97,20 @@ namespace GameFinder
         {
             if (Sessions.TryGetValue(sessionCode, out Session? session))
             {
+                // Remove mapping
+                ConnectionUserMapping.TryRemove(Context.ConnectionId, out _);
                 if (UserGames.TryRemove(Context.ConnectionId, out _))
                 {
                     session.Users.Remove(Context.ConnectionId);
                     await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
                     await Clients.Client(Context.ConnectionId).SendAsync("LeaveSession", username);
                 }
-
+                // Cleanup Admin collection if this user was admin
+                if (Admins.ContainsKey(username))
+                {
+                    Admins.TryRemove(username, out _);
+                    // Optionally, reassign admin status to another user in the session.
+                }
                 if (!session.Users.Any())
                 {
                     Sessions.TryRemove(sessionCode, out _);
@@ -99,17 +118,23 @@ namespace GameFinder
             }
         }
 
+        // 3. Validate game list intersection in StartSession
         public async Task StartSession(string sessionCode)
         {
             if (Sessions.TryGetValue(sessionCode, out Session? session))
             {
-                // Get the intersection of game lists from all users in the session
+                // Ensure there is at least one user; if only one user exists, handle it accordingly.
+                if (session.Users.Count < 1)
+                {
+                    await Clients.Client(Context.ConnectionId).SendAsync("Error", "Not enough participants to start the session.");
+                    return;
+                }
+                // Aggregate game lists from all users in the session with safety for single user scenarios.
                 HashSet<string> commonGames = session.Users
-                    .Where(UserGames.ContainsKey)
-                    .Select(connId => UserGames[connId])
-                    .Aggregate((previousList, nextList) => 
-                        new HashSet<string>(previousList.Intersect(nextList)
-                            .OrderBy(x => Guid.NewGuid()))); // Randomize the order of games
+                    .Where(id => UserGames.ContainsKey(id))
+                    .Select(id => UserGames[id])
+                    .Aggregate((previousList, nextList) =>
+                        new HashSet<string>(previousList.Intersect(nextList).OrderBy(x => Guid.NewGuid())));
 
                 session.CommonGames = commonGames;
                 await Clients.Group(sessionCode).SendAsync("SessionStarted", commonGames);
