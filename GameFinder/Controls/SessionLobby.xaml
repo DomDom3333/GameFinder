@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
+             Unloaded="SessionLobby_Unloaded"
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity">
     <Grid>
         <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -25,7 +26,7 @@
             </ListBox>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
                 <Button Content="Leave" Click="LeaveButton_Click" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="5" Background="LightCoral"/>
-                <Button Content="Start" Click="StartButton_OnClick" IsEnabled="{Binding Source=_admin}" Margin="5" Background="LightGreen"></Button>
+                <Button Content="Start" Click="StartButton_OnClick" IsEnabled="{Binding IsAdmin}" Margin="5" Background="LightGreen" />
             </StackPanel>
         </StackPanel>
     </Grid>

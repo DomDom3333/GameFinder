@@ -18,6 +18,7 @@ public partial class SessionStart : UserControl
         if (string.IsNullOrWhiteSpace(Config.Username))
         {
             MessageBox.Show("Please enter a valid Username", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
         }
         // Create session...
         await App.Api.CreateSessionAsync();
@@ -37,11 +38,13 @@ public partial class SessionStart : UserControl
         if (SessionCodeBox.Text.Length != 4)
         {
             MessageBox.Show("Please enter a valid Session Code", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
         }
 
         if (string.IsNullOrWhiteSpace(Config.Username))
         {
             MessageBox.Show("Please enter a valid Username", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
         }
         
         // Join session...
