@@ -11,9 +11,23 @@ namespace GameFinder.Controls
         private readonly ObservableCollection<string> _admins = new();
         private bool _isAdmin;
         private string _currentUser = string.Empty;
+        private string _sessionId = string.Empty;
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler<string>? StartButtonClicked;
+
+        public string SessionId
+        {
+            get => _sessionId;
+            private set
+            {
+                if (_sessionId != value)
+                {
+                    _sessionId = value;
+                    OnPropertyChanged(nameof(SessionId));
+                }
+            }
+        }
 
         public bool IsAdmin
         {
@@ -34,6 +48,8 @@ namespace GameFinder.Controls
             InitializeComponent();
             DataContext = this;
             UsersListBox.ItemsSource = _users;
+
+            SessionId = App.Api.SessionId;
             
             SetCurrentUser(Config.Username);
             App.Api.UserJoinedSession += AddUser;
@@ -106,6 +122,18 @@ namespace GameFinder.Controls
             App.Api.UserJoinedSession -= AddUser;
             App.Api.UserLeftSession -= RemoveUser;
             App.Api.SessionStarted -= OnSessionStarted;
+        }
+
+        private void CopyCode_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Clipboard.SetText(SessionId);
+            }
+            catch (Exception)
+            {
+                // ignore clipboard errors
+            }
         }
 
         private void OnPropertyChanged(string propertyName)

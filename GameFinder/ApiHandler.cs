@@ -100,12 +100,20 @@ namespace GameFinder
 
         public async Task JoinSessionAsync(string sessionCode, string username, List<string> gameList)
         {
-            if (Connection != null) await Connection.InvokeAsync("JoinSession", sessionCode, username, gameList);
+            SessionId = sessionCode;
+            if (Connection != null)
+            {
+                await Connection.InvokeAsync("JoinSession", sessionCode, username, gameList);
+            }
         }
         
         public async Task LeaveSessionAsync(string username)
         {
-            if (Connection != null) await Connection.InvokeAsync("LeaveSession", SessionId, username);
+            if (Connection != null)
+            {
+                await Connection.InvokeAsync("LeaveSession", SessionId, username);
+            }
+            SessionId = string.Empty;
         }
 
         public async Task StartSession(string sessionCode)
@@ -120,7 +128,11 @@ namespace GameFinder
 
         public async Task EndSession(string sessionCode)
         {
-            if (Connection != null) await Connection.InvokeAsync("EndSession", sessionCode);
+            if (Connection != null)
+            {
+                await Connection.InvokeAsync("EndSession", sessionCode);
+            }
+            SessionId = string.Empty;
         }
     }
 }
