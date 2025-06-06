@@ -1,0 +1,70 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Publish client
+        run: |
+          dotnet publish GameFinderAvalonia/GameFinderAvalonia.csproj \
+            -c Release -r ${{ matrix.rid }} --self-contained true \
+            -p:PublishSingleFile=true -p:PublishTrimmed=true \
+            -o client
+      - name: Publish server
+        run: |
+          dotnet publish GameFinderApi/GameFinderApi.csproj \
+            -c Release -r ${{ matrix.rid }} --self-contained true \
+            -p:PublishSingleFile=true -p:PublishTrimmed=true \
+            -o server
+      - name: Compress client
+        if: runner.os != 'Windows'
+        run: zip -r client-${{ matrix.rid }}.zip client
+      - name: Compress client (win)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path client/* -DestinationPath client-${{ matrix.rid }}.zip
+        shell: powershell
+      - name: Compress server
+        if: runner.os != 'Windows'
+        run: zip -r server-${{ matrix.rid }}.zip server
+      - name: Compress server (win)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path server/* -DestinationPath server-${{ matrix.rid }}.zip
+        shell: powershell
+      - uses: actions/upload-artifact@v3
+        with:
+          name: client-${{ matrix.rid }}
+          path: client-${{ matrix.rid }}.zip
+      - uses: actions/upload-artifact@v3
+        with:
+          name: server-${{ matrix.rid }}
+          path: server-${{ matrix.rid }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          path: dist
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          artifacts: dist/**/*.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
