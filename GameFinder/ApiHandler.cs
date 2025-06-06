@@ -19,6 +19,7 @@ namespace GameFinder
         public event Action<string, string, bool>? UserSwiped;
         public event Action<string>? GameMatched;
         public event Action<string>? ErrorOccurred;
+        public event Action<string?>? SessionEnded;
 
         public async Task Connect(string[] args)
         {
@@ -79,6 +80,12 @@ namespace GameFinder
                 GameMatched?.Invoke(game);
             });
 
+            connection.On<string?>("SessionEnded", (game) =>
+            {
+                Console.WriteLine($"Session ended. Matched game: {game}");
+                SessionEnded?.Invoke(game);
+            });
+
             connection.On<string>("Error", (errorMessage) =>
             {
                 Console.WriteLine($"Error occurred: {errorMessage}");
@@ -109,6 +116,11 @@ namespace GameFinder
         public async Task Swipe(string sessionCode, string game, bool swipeRight)
         {
             if (Connection != null) await Connection.InvokeAsync("Swipe", sessionCode, game, swipeRight);
+        }
+
+        public async Task EndSession(string sessionCode)
+        {
+            if (Connection != null) await Connection.InvokeAsync("EndSession", sessionCode);
         }
     }
 }
