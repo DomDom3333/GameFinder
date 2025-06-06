@@ -41,6 +41,10 @@ public partial class Swiping : UserControl
                 DisplayGameDetails(currentGameData);
                 (nextGameData, nextGameId) = await PreloadNextGameDetails(); // Preload the next game right after displaying the current one
             }
+            else
+            {
+                await App.Api.EndSession(App.Api.SessionId);
+            }
 
             EnableButtons();
         }
@@ -151,9 +155,16 @@ public partial class Swiping : UserControl
                 ResetCardPosition(element);
                 currentGameData = nextGameData;
                 currentGameId = nextGameId;
-                DisplayGameDetails(currentGameData);
-                (nextGameData, nextGameId) = await PreloadNextGameDetails(); // Preload the subsequent game after swipe completion
-                EnableButtons();
+                if (currentGameData == null)
+                {
+                    await App.Api.EndSession(App.Api.SessionId);
+                }
+                else
+                {
+                    DisplayGameDetails(currentGameData);
+                    (nextGameData, nextGameId) = await PreloadNextGameDetails();
+                    EnableButtons();
+                }
             };
 
             element.RenderTransform = new TranslateTransform();

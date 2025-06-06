@@ -44,6 +44,7 @@ namespace GameFinder.Controls
             InitializeComponent();
             DataContext = this;
             ShowSessionStart();
+            App.Api.SessionEnded += OnSessionEnded;
         }
 
         public async override void EndInit()
@@ -225,6 +226,18 @@ namespace GameFinder.Controls
         internal void ShowSwiping()
         {
             SessionContentControl.Content = new Swiping();
+        }
+
+        internal void ShowResults(string? game)
+        {
+            var result = new MatchResult(game);
+            result.BackClicked += () => ShowSessionStart();
+            SessionContentControl.Content = result;
+        }
+
+        private void OnSessionEnded(string? game)
+        {
+            Dispatcher.Invoke(() => ShowResults(game));
         }
 
         protected virtual void OnPropertyChanged(string propertyName)

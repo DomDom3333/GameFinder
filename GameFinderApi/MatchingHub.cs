@@ -180,6 +180,19 @@ namespace GameFinder
             }
         }
 
+        public async Task EndSession(string sessionCode)
+        {
+            if (Sessions.TryGetValue(sessionCode, out Session? session))
+            {
+                string? result = session.MatchedGames.FirstOrDefault();
+                await Clients.Group(sessionCode).SendAsync("SessionEnded", result);
+            }
+            else
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "Session does not exist");
+            }
+        }
+
         private string GenerateSessionCode()
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
