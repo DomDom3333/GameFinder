@@ -48,11 +48,11 @@ jobs:
         if: runner.os == 'Windows'
         run: Compress-Archive -Path server/* -DestinationPath server-${{ matrix.rid }}.zip
         shell: powershell
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: client-${{ matrix.rid }}
           path: client-${{ matrix.rid }}.zip
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: server-${{ matrix.rid }}
           path: server-${{ matrix.rid }}.zip
@@ -61,7 +61,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: dist
       - uses: ncipollo/release-action@v1
