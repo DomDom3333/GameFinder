@@ -23,12 +23,14 @@ jobs:
         with:
           dotnet-version: '9.0.x'
       - name: Publish client
+        shell: bash
         run: |
           dotnet publish GameFinderAvalonia/GameFinderAvalonia.csproj \
             -c Release -r ${{ matrix.rid }} --self-contained true \
             -p:PublishSingleFile=true -p:PublishTrimmed=true \
             -o client
       - name: Publish server
+        shell: bash
         run: |
           dotnet publish GameFinderApi/GameFinderApi.csproj \
             -c Release -r ${{ matrix.rid }} --self-contained true \
