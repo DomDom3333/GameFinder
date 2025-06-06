@@ -15,44 +15,43 @@ namespace GameFinder.Controls;
 
 public partial class Swiping : UserControl
 {
-    private readonly List<string> _gameIds;
-    private int currentIndex = 0;
-    private Random rand = new();
+    private readonly Queue<string> _gameQueue;
     private readonly HttpClient httpClient = new();
     private GameData? currentGameData = null;
+    private string? currentGameId = null;
     private GameData? nextGameData = null;
-    private HashSet<string> seenGameIds = new();
+    private string? nextGameId = null;
+    private readonly HashSet<string> seenGameIds = new();
 
     public Swiping()
     {
-        _gameIds = Config.CommonGames;
-        //_gameIds = gameIds;
+        _gameQueue = new Queue<string>(Config.CommonGames);
         InitializeComponent();
-        this.Loaded += async (_, _) => await LoadFirstGameAsync();
+        App.Api.GameMatched += OnGameMatched;
+        Unloaded += Swiping_Unloaded;
+        Loaded += async (_, _) => await LoadFirstGameAsync();
     }
 
     private async Task LoadFirstGameAsync()
         {
             DisableButtons();
-            currentGameData = await PreloadNextGameDetails();
+            (currentGameData, currentGameId) = await PreloadNextGameDetails();
             if (currentGameData != null)
             {
                 DisplayGameDetails(currentGameData);
-                nextGameData =
-                    await PreloadNextGameDetails(); // Preload the next game right after displaying the current one
+                (nextGameData, nextGameId) = await PreloadNextGameDetails(); // Preload the next game right after displaying the current one
             }
 
             EnableButtons();
         }
 
-        private async Task<GameData?> PreloadNextGameDetails()
+        private async Task<(GameData? gameData, string? gameId)> PreloadNextGameDetails()
         {
-            Console.WriteLine($"Preloading next game details; remaining games: {_gameIds.Count - currentIndex}");
+            Console.WriteLine($"Preloading next game details; remaining games: {_gameQueue.Count}");
 
-            while (_gameIds.Count > currentIndex)
+            while (_gameQueue.Count > 0)
             {
-                var gameId = _gameIds[currentIndex];
-                _gameIds.Remove(gameId);
+                var gameId = _gameQueue.Dequeue();
 
                 if (seenGameIds.Contains(gameId))
                 {
@@ -75,7 +74,7 @@ public partial class Swiping : UserControl
                         gameData.Categories.Any(x => x.Id == 1))
                     {
                         seenGameIds.Add(gameId);
-                        return gameData;
+                        return (gameData, gameId);
                     }
                 }
                 catch (Exception ex)
@@ -85,7 +84,7 @@ public partial class Swiping : UserControl
             }
 
             //MessageBox.Show("No more game profiles to show.");
-            return null;
+            return (null, null);
         }
 
         private void DisplayGameDetails(GameData? game)
@@ -125,7 +124,10 @@ public partial class Swiping : UserControl
                 DisableButtons();
                 var swipeAction = like ? "Liking" : "Disliking";
                 Console.WriteLine($"{swipeAction} game: {currentGameData?.Name}");
-                await App.Api.Swipe(App.Api.SessionId, _gameIds[currentIndex], like);
+                if (!string.IsNullOrEmpty(currentGameId))
+                {
+                    await App.Api.Swipe(App.Api.SessionId, currentGameId, like);
+                }
                 AnimateCard(ProfileCard, like ? 500 : -500);
             }
             catch (Exception ex)
@@ -148,10 +150,10 @@ public partial class Swiping : UserControl
                 Trace.WriteLine("Card animation completed.");
                 ResetCardPosition(element);
                 currentGameData = nextGameData;
+                currentGameId = nextGameId;
                 DisplayGameDetails(currentGameData);
-                nextGameData = await PreloadNextGameDetails(); // Preload the subsequent game after swipe completion
+                (nextGameData, nextGameId) = await PreloadNextGameDetails(); // Preload the subsequent game after swipe completion
                 EnableButtons();
-                currentIndex++;
             };
 
             element.RenderTransform = new TranslateTransform();
@@ -190,5 +192,17 @@ public partial class Swiping : UserControl
                 OnDislikeButtonClick(sender, e);
             else if (e.Key == Key.Right)
                 OnLikeButtonClick(sender, e);
+        }
+
+        private void OnGameMatched(string gameId)
+        {
+            Dispatcher.Invoke(() =>
+                MessageBox.Show($"All players liked {gameId}!", "Match", MessageBoxButton.OK, MessageBoxImage.Information));
+        }
+
+        private void Swiping_Unloaded(object sender, RoutedEventArgs e)
+        {
+            App.Api.GameMatched -= OnGameMatched;
+            Unloaded -= Swiping_Unloaded;
         }
 }
