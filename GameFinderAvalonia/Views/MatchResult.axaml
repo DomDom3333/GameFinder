@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="GameFinderAvalonia.Views.MatchResult">
+    <StackPanel Margin="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock x:Name="Result" FontSize="20" FontWeight="Bold"/>
+        <Button Content="Back" Click="Back" Margin="10" HorizontalAlignment="Center"/>
+    </StackPanel>
+</UserControl>
