@@ -3,12 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid Background="#FFEFEFEF">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock x:Name="ResultText" FontSize="24" FontWeight="Bold" Text="Result" Margin="10" TextAlignment="Center"/>
-            <Button Content="Back" Click="Back_Click" Width="100" Margin="10" HorizontalAlignment="Center"/>
-        </StackPanel>
+        <wpfui:Card Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock x:Name="ResultText" FontSize="24" FontWeight="Bold" Margin="10" TextAlignment="Center"/>
+                <wpfui:Button Content="Back" Click="Back_Click" Width="100" Margin="10" Appearance="Primary"/>
+            </StackPanel>
+        </wpfui:Card>
     </Grid>
 </UserControl>
