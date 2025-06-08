@@ -1,0 +1,44 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore dependencies
+        run: dotnet restore Solution1.sln
+      - name: Publish projects
+        run: |
+          dotnet publish GameFinder/GameFinder.csproj -c Release -o publish/GameFinder
+          dotnet publish GameFinderApi/GameFinderApi.csproj -c Release -o publish/GameFinderApi
+          dotnet publish ConsoleApp1/ConsoleApp1.csproj -c Release -o publish/ConsoleApp1
+      - name: Create zip
+        run: Compress-Archive -Path publish\* -DestinationPath GameFinder.zip
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: GameFinder
+          path: GameFinder.zip
+
+  release:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: GameFinder
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: Release v1.${{ github.run_number }}
+          files: GameFinder.zip
