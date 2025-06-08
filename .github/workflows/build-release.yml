@@ -24,7 +24,7 @@ jobs:
       - name: Create zip
         run: Compress-Archive -Path publish\* -DestinationPath GameFinder.zip
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: GameFinder
           path: GameFinder.zip
@@ -33,7 +33,7 @@ jobs:
     needs: build
     runs-on: windows-latest
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: GameFinder
       - name: Create GitHub Release
