@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
@@ -22,6 +23,8 @@ public partial class Swiping : UserControl
     private GameData? nextGameData = null;
     private string? nextGameId = null;
     private readonly HashSet<string> seenGameIds = new();
+
+    public event Action? LeaveClicked;
 
     public Swiping()
     {
@@ -215,5 +218,11 @@ public partial class Swiping : UserControl
         {
             App.Api.GameMatched -= OnGameMatched;
             Unloaded -= Swiping_Unloaded;
+        }
+
+        private async void OnLeaveButtonClick(object sender, RoutedEventArgs e)
+        {
+            await App.Api.LeaveSessionAsync(Config.Username);
+            LeaveClicked?.Invoke();
         }
 }

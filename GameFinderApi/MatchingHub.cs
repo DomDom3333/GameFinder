@@ -103,14 +103,53 @@ namespace GameFinder
                 {
                     session.Users.Remove(Context.ConnectionId);
                     await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
-                    await Clients.Client(Context.ConnectionId).SendAsync("LeaveSession", username);
+
+                    // Remove user swipes from all games
+                    foreach (var kvp in session.GameSwipes.Values)
+                    {
+                        kvp.TryRemove(Context.ConnectionId, out _);
+                    }
+
+                    // Recalculate matched games
+                    session.MatchedGames.Clear();
+                    foreach (var (gameId, swipes) in session.GameSwipes)
+                    {
+                        bool allRight = session.Users.All(id => swipes.TryGetValue(id, out bool right) && right);
+                        if (allRight)
+                        {
+                            session.MatchedGames.Add(gameId);
+                        }
+                    }
+
+                    // Recalculate common games for remaining users
+                    if (session.Users.Count > 0)
+                    {
+                        var remainingLists = session.Users
+                            .Where(id => UserGames.ContainsKey(id))
+                            .Select(id => UserGames[id])
+                            .ToList();
+                        if (remainingLists.Count > 0)
+                        {
+                            var common = remainingLists.Aggregate((prev, next) => new HashSet<string>(prev.Intersect(next)));
+                            session.CommonGames = common;
+                        }
+                        else
+                        {
+                            session.CommonGames.Clear();
+                        }
+                    }
+
+                    await Clients.Client(Context.ConnectionId).SendAsync("LeftSession", username);
+                    await Clients.GroupExcept(sessionCode, Context.ConnectionId).SendAsync("LeftSession", username);
                 }
+
                 // Cleanup Admin collection if this user was admin
                 if (Admins.ContainsKey(username))
                 {
                     Admins.TryRemove(username, out _);
                     // Optionally, reassign admin status to another user in the session.
                 }
+
                 if (!session.Users.Any())
                 {
                     Sessions.TryRemove(sessionCode, out _);

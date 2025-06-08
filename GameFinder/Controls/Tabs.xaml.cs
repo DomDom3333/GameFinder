@@ -225,7 +225,9 @@ namespace GameFinder.Controls
 
         internal void ShowSwiping()
         {
-            SessionContentControl.Content = new Swiping();
+            var swiping = new Swiping();
+            swiping.LeaveClicked += () => ShowSessionStart();
+            SessionContentControl.Content = swiping;
         }
 
         internal void ShowResults(string? game)

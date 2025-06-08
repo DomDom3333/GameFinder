@@ -123,6 +123,7 @@ namespace GameFinder
             SessionId = string.Empty;
             _currentUser = string.Empty;
             IsCurrentUserAdmin = false;
+            Config.CommonGames.Clear();
         }
 
         public async Task StartSession(string sessionCode)
