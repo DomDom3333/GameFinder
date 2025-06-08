@@ -10,6 +10,8 @@ namespace GameFinder
     {
         public HubConnection? Connection { get; set; }
         public string SessionId { get; private set; } = string.Empty;
+        private string _currentUser = string.Empty;
+        public bool IsCurrentUserAdmin { get; private set; }
 
         // Define events
         public event Action<string>? SessionCreated;
@@ -50,6 +52,10 @@ namespace GameFinder
                 if (admin)
                 {
                     Console.WriteLine("User is admin");
+                }
+                if (username == _currentUser)
+                {
+                    IsCurrentUserAdmin = admin;
                 }
                 UserJoinedSession?.Invoke(username, admin);
             });
@@ -101,6 +107,7 @@ namespace GameFinder
         public async Task JoinSessionAsync(string sessionCode, string username, List<string> gameList)
         {
             SessionId = sessionCode;
+            _currentUser = username;
             if (Connection != null)
             {
                 await Connection.InvokeAsync("JoinSession", sessionCode, username, gameList);
@@ -114,6 +121,8 @@ namespace GameFinder
                 await Connection.InvokeAsync("LeaveSession", SessionId, username);
             }
             SessionId = string.Empty;
+            _currentUser = string.Empty;
+            IsCurrentUserAdmin = false;
         }
 
         public async Task StartSession(string sessionCode)
@@ -133,6 +142,8 @@ namespace GameFinder
                 await Connection.InvokeAsync("EndSession", sessionCode);
             }
             SessionId = string.Empty;
+            _currentUser = string.Empty;
+            IsCurrentUserAdmin = false;
         }
     }
 }

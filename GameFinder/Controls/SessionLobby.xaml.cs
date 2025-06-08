@@ -51,7 +51,7 @@ namespace GameFinder.Controls
 
             SessionId = App.Api.SessionId;
             
-            SetCurrentUser(Config.Username);
+            SetCurrentUser(Config.Username, App.Api.IsCurrentUserAdmin);
             App.Api.UserJoinedSession += AddUser;
             App.Api.UserLeftSession += RemoveUser;
             App.Api.SessionStarted += OnSessionStarted;
