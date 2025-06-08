@@ -12,7 +12,7 @@
             <TabItem>
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="10" Height="10" Fill="DarkGray" Margin="5"/>
+                        <wpfui:SymbolIcon Symbol="Home24" Margin="5"/>
                         <TextBlock>Home</TextBlock>
                     </StackPanel>
                 </TabItem.Header>
@@ -52,7 +52,7 @@
             <TabItem Padding="10">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="10" Height="10" Fill="DarkGray" Margin="5"/>
+                        <wpfui:SymbolIcon Symbol="Games24" Margin="5"/>
                         <TextBlock>Session</TextBlock>
                     </StackPanel>
                 </TabItem.Header>
@@ -63,7 +63,7 @@
             <TabItem>
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="10" Height="10" Fill="DarkGray" Margin="5"/>
+                        <wpfui:SymbolIcon Symbol="Settings24" Margin="5"/>
                         <TextBlock>Config</TextBlock>
                     </StackPanel>
                 </TabItem.Header>

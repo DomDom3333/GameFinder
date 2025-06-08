@@ -6,7 +6,7 @@
              xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid Background="#FFEFEFEF">
+    <Grid Background="Transparent">
         <wpfui:Card Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
             <StackPanel HorizontalAlignment="Center">
                 <TextBlock x:Name="ResultText" FontSize="24" FontWeight="Bold" Margin="10" TextAlignment="Center"/>

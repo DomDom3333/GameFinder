@@ -17,7 +17,8 @@ namespace GameFinder
         public MainWindow()
         {
             InitializeComponent();
-            ApplicationThemeManager.Apply(this);
+            ApplicationThemeManager.Apply(ApplicationTheme.Dark, WindowBackdropType.Mica, true);
+            ApplicationAccentColorManager.Apply(Color.FromRgb(71, 126, 244), ApplicationTheme.Dark);
         }
     }
 }
