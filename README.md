@@ -12,6 +12,8 @@ Both the client and server are included in `Solution1.sln`.
 
 The WPF client uses `Microsoft.NET.Sdk.WindowsDesktop`. Building the solution requires the .NET Desktop Runtime and SDK, which are available only on Windows.
 
+The API persistently caches fetched game details and throttles Steam requests with a token bucket limiter to avoid rate limits. On a fresh start the server will still queue incoming requests so the store is never overwhelmed.
+
 ## Obtaining Steam API credentials
 1. Sign in to your Steam account and open <https://steamcommunity.com/dev/apikey>.
 2. Enter any domain name ("localhost" works) and press **Register** to generate a key.
