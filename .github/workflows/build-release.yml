@@ -15,19 +15,19 @@ jobs:
         with:
           dotnet-version: 7.0.x
       - name: Restore dependencies
-        run: dotnet restore Solution1.sln
+        run: dotnet restore ArcadeMatch.sln
       - name: Publish projects
         run: |
-          dotnet publish GameFinder/GameFinder.csproj -c Release -o publish/GameFinder
-          dotnet publish GameFinderApi/GameFinderApi.csproj -c Release -o publish/GameFinderApi
-          dotnet publish ConsoleApp1/ConsoleApp1.csproj -c Release -o publish/ConsoleApp1
+          dotnet publish ArcadeMatch.Client/ArcadeMatch.Client.csproj -c Release -o publish/ArcadeMatch.Client
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -o publish/ArcadeMatch.Server
+          dotnet publish SteamCookieFetcher/SteamCookieFetcher.csproj -c Release -o publish/SteamCookieFetcher
       - name: Create zip
-        run: Compress-Archive -Path publish\* -DestinationPath GameFinder.zip
+        run: Compress-Archive -Path publish\* -DestinationPath ArcadeMatch.zip
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GameFinder
-          path: GameFinder.zip
+          name: ArcadeMatch
+          path: ArcadeMatch.zip
 
   release:
     needs: build
@@ -37,10 +37,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: GameFinder
+          name: ArcadeMatch
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v1.${{ github.run_number }}
           name: Release v1.${{ github.run_number }}
-          files: GameFinder.zip
+          files: ArcadeMatch.zip

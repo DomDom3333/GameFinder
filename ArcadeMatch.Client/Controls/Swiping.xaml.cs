@@ -10,6 +10,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using GameFinder.Helpers;
 using GameFinder.Objects;
+using GameFinder;
 using Microsoft.VisualBasic;
 
 namespace GameFinder.Controls;
@@ -66,6 +67,12 @@ public partial class Swiping : UserControl
                     continue;
                 }
 
+                if (GameDataCache.TryGet(gameId, out GameData? cached))
+                {
+                    seenGameIds.Add(gameId);
+                    return (cached, gameId);
+                }
+
                 var apiUrl = $"http://127.0.0.1:5170/SteamMarketData/{gameId}";
                 try
                 {
@@ -81,6 +88,7 @@ public partial class Swiping : UserControl
                         gameData.Categories.Any(x => x.Id == 1))
                     {
                         seenGameIds.Add(gameId);
+                        await GameDataCache.SetAsync(gameId, gameData);
                         return (gameData, gameId);
                     }
                 }
