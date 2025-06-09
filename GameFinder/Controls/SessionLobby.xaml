@@ -18,7 +18,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border BorderBrush="White" BorderThickness="1">
-                                <TextBlock Text="{Binding}" Margin="5"/>
+                                <TextBlock Text="{Binding DisplayName}" Margin="5"/>
                             </Border>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
