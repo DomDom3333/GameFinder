@@ -1,4 +1,4 @@
-# Repository Guidelines for GameFinder
+# Repository Guidelines for ArcadeMatch
 
 This file provides repository-specific instructions for agents working in this codebase.
 
@@ -16,16 +16,16 @@ This file provides repository-specific instructions for agents working in this c
 Run the following commands from the repository root before committing changes to confirm the solution builds:
 
 ```bash
-dotnet restore Solution1.sln
-dotnet build --no-restore Solution1.sln
+dotnet restore ArcadeMatch.sln
+dotnet build --no-restore ArcadeMatch.sln
 ```
 
 The solution includes a WPF project that requires the .NET Desktop SDK and will only build on Windows. If building on a non-Windows environment, you may build the API and console projects individually:
 
 ```bash
-dotnet build GameFinderApi/GameFinderApi.csproj
+dotnet build ArcadeMatch.Server/ArcadeMatch.Server.csproj
 
-dotnet build ConsoleApp1/ConsoleApp1.csproj
+dotnet build SteamCookieFetcher/SteamCookieFetcher.csproj
 ```
 
 If the repository gains unit tests, run `dotnet test` as well.
