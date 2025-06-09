@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 
 namespace GameFinder.Controls
 {
@@ -197,6 +198,15 @@ namespace GameFinder.Controls
             catch (Exception)
             {
                 // ignore clipboard errors
+            }
+        }
+
+        private void OnUserItemLoaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is UIElement element)
+            {
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                element.BeginAnimation(UIElement.OpacityProperty, fadeIn);
             }
         }
 

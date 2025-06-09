@@ -145,17 +145,25 @@ public partial class Swiping : UserControl
 
         private void AnimateCard(UIElement element, double toValue)
         {
-            var animation = new DoubleAnimation
+            var slide = new DoubleAnimation
             {
                 To = toValue,
-                Duration = TimeSpan.FromSeconds(0.5),
+                Duration = TimeSpan.FromSeconds(0.4),
                 FillBehavior = FillBehavior.Stop
             };
 
-            animation.Completed += async (_, _) =>
+            var fadeOut = new DoubleAnimation
+            {
+                To = 0,
+                Duration = TimeSpan.FromSeconds(0.4),
+                FillBehavior = FillBehavior.Stop
+            };
+
+            slide.Completed += async (_, _) =>
             {
                 Trace.WriteLine("Card animation completed.");
                 ResetCardPosition(element);
+                element.Opacity = 0;
                 currentGameData = nextGameData;
                 currentGameId = nextGameId;
                 if (currentGameData == null)
@@ -168,15 +176,21 @@ public partial class Swiping : UserControl
                     (nextGameData, nextGameId) = await PreloadNextGameDetails();
                     EnableButtons();
                 }
+
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                element.BeginAnimation(UIElement.OpacityProperty, fadeIn);
             };
 
             element.RenderTransform = new TranslateTransform();
-            Storyboard.SetTarget(animation, element);
-            Storyboard.SetTargetProperty(animation,
+            Storyboard.SetTarget(slide, element);
+            Storyboard.SetTargetProperty(slide,
                 new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.X)"));
+            Storyboard.SetTarget(fadeOut, element);
+            Storyboard.SetTargetProperty(fadeOut, new PropertyPath(UIElement.OpacityProperty));
 
             var storyboard = new Storyboard();
-            storyboard.Children.Add(animation);
+            storyboard.Children.Add(slide);
+            storyboard.Children.Add(fadeOut);
             storyboard.Begin();
         }
 

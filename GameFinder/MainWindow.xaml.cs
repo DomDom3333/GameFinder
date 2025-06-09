@@ -19,6 +19,11 @@ namespace GameFinder
             InitializeComponent();
             ApplicationThemeManager.Apply(ApplicationTheme.Dark, WindowBackdropType.Mica, true);
             ApplicationAccentColorManager.Apply(Color.FromRgb(79, 139, 255), ApplicationTheme.Dark);
+            Opacity = 0;
+            Loaded += (_, _) =>
+            {
+                BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300)));
+            };
         }
     }
 }

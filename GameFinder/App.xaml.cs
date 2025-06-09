@@ -23,11 +23,14 @@ public partial class App : Application
     public static ApiHandler Api = new ApiHandler();
     private async void Application_Startup(object sender, StartupEventArgs e)
     {
+        SplashScreen splash = new SplashScreen();
+        splash.Show();
+
         await Api.Connect(Config.GameList.ToArray());
-        
-        
-        
+
         MainWindow mainWindow = new MainWindow();
         mainWindow.Show();
+
+        await splash.CloseWithFadeAsync();
     }
 }

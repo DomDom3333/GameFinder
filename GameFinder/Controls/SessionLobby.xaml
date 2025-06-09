@@ -15,6 +15,12 @@
                     <wpfui:Button Content="Copy" Padding="5" Appearance="Primary" Click="CopyCode_OnClick"/>
                 </StackPanel>
                 <ListBox x:Name="UsersListBox" Margin="5" BorderBrush="Gray">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Opacity" Value="0"/>
+                            <EventSetter Event="Loaded" Handler="OnUserItemLoaded"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border BorderBrush="White" BorderThickness="1">

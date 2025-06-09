@@ -8,6 +8,7 @@ using System.Text.Json.Nodes;
 using System.Web;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 using GameFinder.Objects;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -238,9 +239,8 @@ namespace GameFinder.Controls
         internal void ShowSessionStart()
         {
             var sessionStartControl = new SessionStart();
-            // Subscribe to SessionButtonClicked event
             sessionStartControl.SessionButtonClicked += OnSessionButtonClicked;
-            SessionContentControl.Content = sessionStartControl;
+            SetContentAnimated(sessionStartControl);
         }
         
         private void OnSessionButtonClicked(object? sender, string action)
@@ -268,21 +268,41 @@ namespace GameFinder.Controls
         {
             var sessionLobbyCotrol = new SessionLobby();
             sessionLobbyCotrol.StartButtonClicked += OnSessionButtonClicked;
-            SessionContentControl.Content = sessionLobbyCotrol;
+            SetContentAnimated(sessionLobbyCotrol);
         }
 
         internal void ShowSwiping()
         {
             var swiping = new Swiping();
             swiping.LeaveClicked += () => ShowSessionStart();
-            SessionContentControl.Content = swiping;
+            SetContentAnimated(swiping);
         }
 
         internal void ShowResults(string? game)
         {
             var result = new MatchResult(game);
             result.BackClicked += () => ShowSessionStart();
-            SessionContentControl.Content = result;
+            SetContentAnimated(result);
+        }
+
+        private void SetContentAnimated(UserControl control)
+        {
+            if (SessionContentControl.Content is UIElement oldContent)
+            {
+                var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200));
+                fadeOut.Completed += (_, _) =>
+                {
+                    SessionContentControl.Content = control;
+                    control.Opacity = 0;
+                    var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+                    control.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+                };
+                oldContent.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            }
+            else
+            {
+                SessionContentControl.Content = control;
+            }
         }
 
         private void OnSessionEnded(string? game)
