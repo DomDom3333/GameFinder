@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Media.Animation;
 using Wpf.Ui.Controls;
@@ -9,11 +10,10 @@ namespace GameFinder
     {
         public MainWindow()
         {
-            InitializeComponent();
-            TitleBar = AppTitleBar;
+            InitializeComponent(); 
             ExtendsContentIntoTitleBar = true;
             Opacity = 0;
-            Loaded += (_, _) =>
+            ContentRendered += (s, e) =>
             {
                 UnsafeNativeMethods.ExtendClientAreaIntoTitleBar(this);
                 BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300)));
@@ -21,4 +21,3 @@ namespace GameFinder
         }
     }
 }
-

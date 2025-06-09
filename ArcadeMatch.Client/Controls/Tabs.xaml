@@ -1,82 +1,235 @@
-<UserControl x:Class="GameFinder.Controls.Tabs"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:selfmade="clr-namespace:GameFinder.Controls"
-             xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
-             mc:Ignorable="d"
-             d:DesignHeight="300" d:DesignWidth="600">
+<UserControl
+    d:DesignHeight="300"
+    d:DesignWidth="600"
+    mc:Ignorable="d"
+    x:Class="GameFinder.Controls.Tabs"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:selfmade="clr-namespace:GameFinder.Controls"
+    xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
-        <TabControl Margin="0" Padding="10">
+        <TabControl Margin="0" Padding="20,10,20,20">
+            <!--  Home Tab  -->
             <TabItem>
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <wpfui:SymbolIcon Symbol="Home24" Margin="5"/>
-                        <TextBlock>Home</TextBlock>
+                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Home24" />
+                        <TextBlock FontWeight="Medium" Text="Home" />
                     </StackPanel>
                 </TabItem.Header>
-                <wpfui:Card Padding="20" Margin="20" HorizontalAlignment="Center" VerticalAlignment="Center" Width="400">
-                    <StackPanel Orientation="Vertical" Margin="5">
-                        <TextBlock FontSize="18" FontWeight="SemiBold" Padding="5">Login instructions</TextBlock>
-                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,5">
-                            Click the login button. It will open a web browser with the Steam login page. Log in and DO NOT CLOSE THE BROWSER YET!
-                        </TextBlock>
-                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10">
-                            Once you have logged in, click the refresh button. Once the login has been verified, you can close the web browser
-                        </TextBlock>
-                        <StackPanel Orientation="Vertical" Margin="5">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Margin="10">Login Status:</TextBlock>
-                                <Ellipse Width="20" Height="20" Margin="10">
-                                    <Ellipse.Style>
-                                        <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="Red"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsLoggedIn}" Value="True">
-                                                    <Setter Property="Fill" Value="Green"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Ellipse.Style>
-                                </Ellipse>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <wpfui:Button Margin="10" Appearance="Primary" Click="LoginButton_OnClick">Login</wpfui:Button>
-                                <wpfui:Button Margin="10" Appearance="Secondary" Click="RefreshButton_OnClick">Refresh</wpfui:Button>
-                            </StackPanel>
-                        </StackPanel>
-                    </StackPanel>
-                </wpfui:Card>
-            </TabItem>
-            <TabItem Padding="10">
-                <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <wpfui:SymbolIcon Symbol="Games24" Margin="5"/>
-                        <TextBlock>Session</TextBlock>
-                    </StackPanel>
-                </TabItem.Header>
-                <TabItem.Content>
-                    <ContentControl x:Name="SessionContentControl"/>
-                </TabItem.Content>
-            </TabItem>
-            <TabItem>
-                <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <wpfui:SymbolIcon Symbol="Settings24" Margin="5"/>
-                        <TextBlock>Config</TextBlock>
-                    </StackPanel>
-                </TabItem.Header>
-                <TabItem.Content>
-                    <wpfui:Card Padding="20" Margin="20" HorizontalAlignment="Center" VerticalAlignment="Center" Width="400">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <wpfui:Card
+                        HorizontalAlignment="Center"
+                        Margin="20"
+                        Padding="40"
+                        VerticalAlignment="Center"
+                        Width="500">
                         <StackPanel>
-                            <TextBlock Text="Steam API Key"/>
-                            <TextBox x:Name="ApiKeyBox" Margin="0,0,0,10"/>
-                            <TextBlock Text="Steam ID"/>
-                            <TextBox x:Name="SteamIdBox" Margin="0,0,0,10"/>
-                            <wpfui:Button Content="Fetch via API" Click="ApiFetchButton_OnClick"/>
+                            <!--  Header  -->
+                            <StackPanel HorizontalAlignment="Center" Margin="0,0,0,30">
+                                <wpfui:SymbolIcon
+                                    FontSize="48"
+                                    Foreground="{DynamicResource AccentBrush}"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,0,0,16"
+                                    Symbol="Key24" />
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    Style="{DynamicResource HeaderTextStyle}"
+                                    Text="Steam Authentication" />
+                            </StackPanel>
+
+                            <!--  Instructions  -->
+                            <Border
+                                Background="{DynamicResource TertiaryBackgroundBrush}"
+                                CornerRadius="10"
+                                Margin="0,0,0,25"
+                                Padding="20">
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="0,0,0,15"
+                                        Style="{DynamicResource SubheaderTextStyle}"
+                                        Text="📋 Setup Instructions" />
+
+                                    <StackPanel>
+                                        <TextBlock
+                                            Margin="0,0,0,8"
+                                            Style="{DynamicResource BodyTextStyle}"
+                                            Text="1️⃣ Click the login button below" />
+                                        <TextBlock
+                                            Margin="0,0,0,8"
+                                            Style="{DynamicResource BodyTextStyle}"
+                                            Text="2️⃣ Complete Steam authentication in browser" />
+                                        <TextBlock
+                                            Margin="0,0,0,8"
+                                            Style="{DynamicResource BodyTextStyle}"
+                                            Text="3️⃣ Click refresh to verify login status" />
+                                        <TextBlock Style="{DynamicResource BodyTextStyle}" Text="4️⃣ Keep browser open until verification is complete" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--  Status Section  -->
+                            <Border
+                                Background="{DynamicResource TertiaryBackgroundBrush}"
+                                CornerRadius="10"
+                                Margin="0,0,0,25"
+                                Padding="20">
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="0,0,0,15"
+                                        Style="{DynamicResource SubheaderTextStyle}"
+                                        Text="🔐 Authentication Status" />
+
+                                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                        <Border
+                                            CornerRadius="15"
+                                            Margin="0,0,15,0"
+                                            Padding="15,8">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#FF4444" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsLoggedIn}" Value="True">
+                                                            <Setter Property="Background" Value="#44AA44" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse
+                                                    Fill="White"
+                                                    Height="12"
+                                                    Margin="0,0,8,0"
+                                                    Width="12" />
+                                                <TextBlock FontWeight="Medium" Foreground="White">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="Not Connected" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsLoggedIn}" Value="True">
+                                                                    <Setter Property="Text" Value="Connected" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--  Action Buttons  -->
+                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                <wpfui:Button
+                                    Appearance="Primary"
+                                    Click="LoginButton_OnClick"
+                                    Content="🔑 Login to Steam"
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    Margin="0,0,15,0"
+                                    Padding="20,15" />
+                                <wpfui:Button
+                                    Appearance="Secondary"
+                                    Click="RefreshButton_OnClick"
+                                    Content="🔄 Refresh Status"
+                                    FontSize="14"
+                                    Padding="20,15" />
+                            </StackPanel>
                         </StackPanel>
                     </wpfui:Card>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Session Tab  -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Games24" />
+                        <TextBlock FontWeight="Medium" Text="Session" />
+                    </StackPanel>
+                </TabItem.Header>
+                <TabItem.Content>
+                    <ContentControl x:Name="SessionContentControl" />
+                </TabItem.Content>
+            </TabItem>
+
+            <!--  Config Tab  -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Settings24" />
+                        <TextBlock FontWeight="Medium" Text="Settings" />
+                    </StackPanel>
+                </TabItem.Header>
+                <TabItem.Content>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <wpfui:Card
+                            HorizontalAlignment="Center"
+                            Margin="20"
+                            Padding="40"
+                            VerticalAlignment="Center"
+                            Width="500">
+                            <StackPanel>
+                                <!--  Header  -->
+                                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,30">
+                                    <wpfui:SymbolIcon
+                                        FontSize="48"
+                                        Foreground="{DynamicResource AccentBrush}"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,0,0,16"
+                                        Symbol="Settings24" />
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        Style="{DynamicResource HeaderTextStyle}"
+                                        Text="Configuration" />
+                                </StackPanel>
+
+                                <!--  Steam API Key  -->
+                                <TextBlock Style="{DynamicResource SubheaderTextStyle}" Text="🔐 Steam API Key" />
+                                <Border
+                                    Background="{DynamicResource TertiaryBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Margin="0,0,0,20">
+                                    <TextBox
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="15,12"
+                                        x:Name="ApiKeyBox" />
+                                </Border>
+
+                                <!--  Steam ID  -->
+                                <TextBlock Style="{DynamicResource SubheaderTextStyle}" Text="🆔 Steam ID" />
+                                <Border
+                                    Background="{DynamicResource TertiaryBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Margin="0,0,0,25">
+                                    <TextBox
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="15,12"
+                                        x:Name="SteamIdBox" />
+                                </Border>
+
+                                <!--  Fetch Button  -->
+                                <wpfui:Button
+                                    Appearance="Primary"
+                                    Click="ApiFetchButton_OnClick"
+                                    Content="🔄 Fetch via API"
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    HorizontalAlignment="Center"
+                                    Padding="20,15" />
+                            </StackPanel>
+                        </wpfui:Card>
+                    </ScrollViewer>
                 </TabItem.Content>
             </TabItem>
         </TabControl>
