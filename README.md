@@ -21,3 +21,10 @@ The API persistently caches fetched game details and throttles Steam requests wi
 4. Find your numeric Steam ID by opening your profile and copying the number from the URL (use <https://steamidfinder.com/> if you have a custom URL).
 5. Launch ArcadeMatch, open the **Config** tab, and paste your API key and Steam ID.
 6. Click **Fetch via API** to load your games without using cookies.
+
+## Releases
+GitHub releases contain prebuilt binaries for the client, the server and the
+Steam cookie utility. Server executables are provided for Windows and Linux
+(x64, arm64 and arm) as self‑contained binaries so they run without a local
+.NET installation. A Docker image of the server is also published on GitHub
+Container Registry for container deployments.
