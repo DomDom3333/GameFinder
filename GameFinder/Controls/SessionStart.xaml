@@ -7,7 +7,7 @@
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
-        <wpfui:Card Width="300" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <wpfui:Card Width="400" Padding="25" HorizontalAlignment="Center" VerticalAlignment="Center">
             <StackPanel Orientation="Vertical">
                 <TextBox x:Name="DisplaynameBox"
                          Margin="5"
