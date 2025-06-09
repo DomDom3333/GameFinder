@@ -67,6 +67,17 @@
                         <TextBlock>Config</TextBlock>
                     </StackPanel>
                 </TabItem.Header>
+                <TabItem.Content>
+                    <wpfui:Card Padding="15" Margin="10">
+                        <StackPanel>
+                            <TextBlock Text="Steam API Key"/>
+                            <TextBox x:Name="ApiKeyBox" Margin="0,0,0,10"/>
+                            <TextBlock Text="Steam ID"/>
+                            <TextBox x:Name="SteamIdBox" Margin="0,0,0,10"/>
+                            <wpfui:Button Content="Fetch via API" Click="ApiFetchButton_OnClick"/>
+                        </StackPanel>
+                    </wpfui:Card>
+                </TabItem.Content>
             </TabItem>
         </TabControl>
     </Grid>

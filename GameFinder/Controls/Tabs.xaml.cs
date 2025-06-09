@@ -65,6 +65,20 @@ namespace GameFinder.Controls
             ShowLogin();
         }
 
+        private async void ApiFetchButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            Config.SteamApiKey = ApiKeyBox.Text.Trim();
+            Config.SteamId = SteamIdBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(Config.SteamApiKey) || string.IsNullOrWhiteSpace(Config.SteamId))
+            {
+                MessageBox.Show("Please enter both API key and Steam ID.");
+                return;
+            }
+
+            IsLoggedIn = await TryGetGameListViaApiAsync(Config.SteamApiKey, Config.SteamId);
+        }
+
         private async Task<bool> TryGetGameListAsync()
         {
             try
@@ -90,6 +104,40 @@ namespace GameFinder.Controls
 
                 Config.GameList = ownedPackages;
                 return true;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return false;
+            }
+        }
+
+        private async Task<bool> TryGetGameListViaApiAsync(string apiKey, string steamId)
+        {
+            try
+            {
+                string url = $"https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={apiKey}&steamid={steamId}&include_appinfo=0";
+                using HttpClient client = new HttpClient();
+                string jsonResponse = await client.GetStringAsync(url);
+
+                JsonNode? games = JsonNode.Parse(jsonResponse)?["response"]?["games"];
+                if (games is not JsonArray arr)
+                {
+                    return false;
+                }
+
+                List<string> ownedPackages = new();
+                foreach (JsonNode? game in arr)
+                {
+                    string? id = game?["appid"]?.ToString();
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        ownedPackages.Add(id);
+                    }
+                }
+
+                Config.GameList = ownedPackages;
+                return ownedPackages.Count > 0;
             }
             catch (Exception e)
             {
