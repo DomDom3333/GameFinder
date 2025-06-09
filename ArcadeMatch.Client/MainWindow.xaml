@@ -8,6 +8,7 @@
                    xmlns:selfmade="clr-namespace:GameFinder.Controls"
                    mc:Ignorable="d"
                    Title="GameFinder"
+                   ExtendsContentIntoTitleBar="True"
                    Height="800"
                    Width="600"
                    Background="{DynamicResource WindowBackgroundBrush}">
@@ -16,7 +17,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <wpfui:TitleBar Title="GameFinder" />
+        <wpfui:TitleBar x:Name="AppTitleBar" Title="GameFinder" />
         <selfmade:Tabs Grid.Row="1" />
     </Grid>
 </wpfui:FluentWindow>
