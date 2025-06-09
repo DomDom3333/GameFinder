@@ -12,6 +12,8 @@ using GameFinder.Objects;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using Cookie = OpenQA.Selenium.Cookie;
+using System.Windows.Media;
+using Wpf.Ui.Appearance;
 
 namespace GameFinder;
 
@@ -23,6 +25,9 @@ public partial class App : Application
     public static ApiHandler Api = new ApiHandler();
     private async void Application_Startup(object sender, StartupEventArgs e)
     {
+        ApplicationThemeManager.Apply(ApplicationTheme.Dark, WindowBackdropType.Mica, true);
+        ApplicationAccentColorManager.Apply(Color.FromRgb(79, 139, 255), ApplicationTheme.Dark);
+
         SplashScreen splash = new SplashScreen();
         splash.Show();
 
