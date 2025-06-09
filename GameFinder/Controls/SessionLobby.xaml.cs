@@ -1,14 +1,63 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 
 namespace GameFinder.Controls
 {
     public partial class SessionLobby : UserControl, INotifyPropertyChanged
     {
-        private readonly ObservableCollection<string> _users = new();
-        private readonly ObservableCollection<string> _admins = new();
+        private class UserEntry : INotifyPropertyChanged
+        {
+            public string Name { get; }
+            private bool _isAdmin;
+            public bool IsAdmin
+            {
+                get => _isAdmin;
+                set
+                {
+                    if (_isAdmin != value)
+                    {
+                        _isAdmin = value;
+                        OnPropertyChanged(nameof(DisplayName));
+                    }
+                }
+            }
+
+            private bool _isCurrent;
+            public bool IsCurrent
+            {
+                get => _isCurrent;
+                set
+                {
+                    if (_isCurrent != value)
+                    {
+                        _isCurrent = value;
+                        OnPropertyChanged(nameof(DisplayName));
+                    }
+                }
+            }
+
+            public string DisplayName => $"{Name}{(IsCurrent ? " (You)" : string.Empty)}{(IsAdmin ? " (Admin)" : string.Empty)}";
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            public UserEntry(string name, bool admin, bool current)
+            {
+                Name = name;
+                _isAdmin = admin;
+                _isCurrent = current;
+            }
+
+            private void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        private readonly ObservableCollection<UserEntry> _users = new();
         private bool _isAdmin;
         private string _currentUser = string.Empty;
         private string _sessionId = string.Empty;
@@ -51,7 +100,7 @@ namespace GameFinder.Controls
 
             SessionId = App.Api.SessionId;
             
-            SetCurrentUser(Config.Username);
+            SetCurrentUser(Config.Username, App.Api.IsCurrentUserAdmin);
             App.Api.UserJoinedSession += AddUser;
             App.Api.UserLeftSession += RemoveUser;
             App.Api.SessionStarted += OnSessionStarted;
@@ -62,6 +111,25 @@ namespace GameFinder.Controls
         {
             _currentUser = username;
             IsAdmin = isAdmin;
+
+            var existing = _users.FirstOrDefault(u => u.Name == username);
+            if (existing == null)
+            {
+                Dispatcher.Invoke(() => _users.Insert(0, new UserEntry(username, isAdmin, true)));
+            }
+            else
+            {
+                existing.IsAdmin = isAdmin;
+                existing.IsCurrent = true;
+                if (_users.IndexOf(existing) != 0)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        _users.Remove(existing);
+                        _users.Insert(0, existing);
+                    });
+                }
+            }
         }
 
         // Method for adding a new user
@@ -70,30 +138,27 @@ namespace GameFinder.Controls
             if (username == _currentUser)
             {
                 SetCurrentUser(username, admin);
+                return;
             }
 
-            if (!_users.Contains(username))
+            var existing = _users.FirstOrDefault(u => u.Name == username);
+            if (existing == null)
             {
-                Dispatcher.Invoke(() => _users.Add(username));
+                Dispatcher.Invoke(() => _users.Add(new UserEntry(username, admin, false)));
             }
-
-            if (admin && !_admins.Contains(username))
+            else
             {
-                Dispatcher.Invoke(() => _admins.Add(username));
+                existing.IsAdmin = admin;
             }
         }
 
         // Method for removing a user
         public void RemoveUser(string username)
         {
-            if (_users.Contains(username))
+            var entry = _users.FirstOrDefault(u => u.Name == username);
+            if (entry != null)
             {
-                Dispatcher.Invoke(() => _users.Remove(username));
-            }
-
-            if (_admins.Contains(username))
-            {
-                Dispatcher.Invoke(() => _admins.Remove(username));
+                Dispatcher.Invoke(() => _users.Remove(entry));
             }
         }
 
@@ -133,6 +198,15 @@ namespace GameFinder.Controls
             catch (Exception)
             {
                 // ignore clipboard errors
+            }
+        }
+
+        private void OnUserItemLoaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is UIElement element)
+            {
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                element.BeginAnimation(UIElement.OpacityProperty, fadeIn);
             }
         }
 

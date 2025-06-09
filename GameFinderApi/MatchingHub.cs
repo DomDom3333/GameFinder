@@ -15,8 +15,8 @@ namespace GameFinder
         // To store user connections and their game lists
         private static readonly ConcurrentDictionary<string, HashSet<string>> UserGames = new();
         
-        // To store Sessions and their Admins
-        private static readonly ConcurrentDictionary<string, HashSet<string>> Admins = new();
+        // Stores the admin username for each session code
+        private static readonly ConcurrentDictionary<string, string> Admins = new();
 
         // Add a mapping between ConnectionId and Username
         private static readonly ConcurrentDictionary<string, string> ConnectionUserMapping = new();
@@ -27,25 +27,83 @@ namespace GameFinder
         }
 
         // 2. Remove user mapping and update admin on disconnect/leave
-        public override Task OnDisconnectedAsync(Exception? exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            // Get the username from the mapping
             if (ConnectionUserMapping.TryRemove(Context.ConnectionId, out string username))
             {
-                // Remove from all sessions
-                foreach (Session session in Sessions.Values)
+                foreach (var kvp in Sessions)
                 {
-                    session.Users.Remove(Context.ConnectionId);
-                }
-                // Remove from user games
-                UserGames.TryRemove(Context.ConnectionId, out _);
-                // Remove from admins if needed
-                if (Admins.ContainsKey(username))
-                {
-                    Admins.TryRemove(username, out _);
+                    string sessionCode = kvp.Key;
+                    Session session = kvp.Value;
+                    if (session.Users.Remove(Context.ConnectionId))
+                    {
+                        UserGames.TryRemove(Context.ConnectionId, out _);
+                        await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
+
+                        foreach (var swipes in session.GameSwipes.Values)
+                        {
+                            swipes.TryRemove(Context.ConnectionId, out _);
+                        }
+
+                        session.MatchedGames.Clear();
+                        foreach (var (gameId, swipes) in session.GameSwipes)
+                        {
+                            bool allRight = session.Users.All(id => swipes.TryGetValue(id, out bool right) && right);
+                            if (allRight)
+                            {
+                                session.MatchedGames.Add(gameId);
+                            }
+                        }
+
+                        if (session.Users.Count > 0)
+                        {
+                            var remainingLists = session.Users
+                                .Where(id => UserGames.ContainsKey(id))
+                                .Select(id => UserGames[id])
+                                .ToList();
+                            if (remainingLists.Count > 0)
+                            {
+                                var common = remainingLists.Aggregate((prev, next) => new HashSet<string>(prev.Intersect(next)));
+                                session.CommonGames = common;
+                            }
+                            else
+                            {
+                                session.CommonGames.Clear();
+                            }
+                        }
+
+                        await Clients.GroupExcept(sessionCode, Context.ConnectionId).SendAsync("LeftSession", username);
+
+                        if (Admins.TryGetValue(sessionCode, out string admin) && admin == username)
+                        {
+                            if (session.Users.Count > 0)
+                            {
+                                string newAdminConn = session.Users.First();
+                                if (ConnectionUserMapping.TryGetValue(newAdminConn, out string newAdminUser))
+                                {
+                                    Admins[sessionCode] = newAdminUser;
+                                    await Clients.Client(newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
+                                    await Clients.GroupExcept(sessionCode, newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
+                                }
+                                else
+                                {
+                                    Admins.TryRemove(sessionCode, out _);
+                                }
+                            }
+                            else
+                            {
+                                Admins.TryRemove(sessionCode, out _);
+                            }
+                        }
+
+                        if (!session.Users.Any())
+                        {
+                            Sessions.TryRemove(sessionCode, out _);
+                        }
+                    }
                 }
             }
-            return base.OnDisconnectedAsync(exception);
+            await base.OnDisconnectedAsync(exception);
         }
 
         public async Task CreateSession()
@@ -64,11 +122,15 @@ namespace GameFinder
             if (Sessions.TryGetValue(sessionCode, out Session? session))
             {
                 // Determine if this user will be admin (first user in the session)
-                bool isAdmin = session.Users.Count == 0;
-                if (isAdmin)
+                bool isAdmin;
+                if (!Admins.TryGetValue(sessionCode, out string? currentAdmin))
                 {
-                    // Use the username as key for admin collection
-                    Admins.TryAdd(username, new HashSet<string>());
+                    isAdmin = true;
+                    Admins[sessionCode] = username;
+                }
+                else
+                {
+                    isAdmin = currentAdmin == username;
                 }
                 // Store the mapping: connection id to user name
                 ConnectionUserMapping[Context.ConnectionId] = username;
@@ -103,14 +165,68 @@ namespace GameFinder
                 {
                     session.Users.Remove(Context.ConnectionId);
                     await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
-                    await Clients.Client(Context.ConnectionId).SendAsync("LeaveSession", username);
+
+                    // Remove user swipes from all games
+                    foreach (var kvp in session.GameSwipes.Values)
+                    {
+                        kvp.TryRemove(Context.ConnectionId, out _);
+                    }
+
+                    // Recalculate matched games
+                    session.MatchedGames.Clear();
+                    foreach (var (gameId, swipes) in session.GameSwipes)
+                    {
+                        bool allRight = session.Users.All(id => swipes.TryGetValue(id, out bool right) && right);
+                        if (allRight)
+                        {
+                            session.MatchedGames.Add(gameId);
+                        }
+                    }
+
+                    // Recalculate common games for remaining users
+                    if (session.Users.Count > 0)
+                    {
+                        var remainingLists = session.Users
+                            .Where(id => UserGames.ContainsKey(id))
+                            .Select(id => UserGames[id])
+                            .ToList();
+                        if (remainingLists.Count > 0)
+                        {
+                            var common = remainingLists.Aggregate((prev, next) => new HashSet<string>(prev.Intersect(next)));
+                            session.CommonGames = common;
+                        }
+                        else
+                        {
+                            session.CommonGames.Clear();
+                        }
+                    }
+
+                    await Clients.Client(Context.ConnectionId).SendAsync("LeftSession", username);
+                    await Clients.GroupExcept(sessionCode, Context.ConnectionId).SendAsync("LeftSession", username);
                 }
-                // Cleanup Admin collection if this user was admin
-                if (Admins.ContainsKey(username))
+
+                if (Admins.TryGetValue(sessionCode, out string admin) && admin == username)
                 {
-                    Admins.TryRemove(username, out _);
-                    // Optionally, reassign admin status to another user in the session.
+                    if (session.Users.Count > 0)
+                    {
+                        string newAdminConn = session.Users.First();
+                        if (ConnectionUserMapping.TryGetValue(newAdminConn, out string newAdminUser))
+                        {
+                            Admins[sessionCode] = newAdminUser;
+                            await Clients.Client(newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
+                            await Clients.GroupExcept(sessionCode, newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
+                        }
+                        else
+                        {
+                            Admins.TryRemove(sessionCode, out _);
+                        }
+                    }
+                    else
+                    {
+                        Admins.TryRemove(sessionCode, out _);
+                    }
                 }
+
                 if (!session.Users.Any())
                 {
                     Sessions.TryRemove(sessionCode, out _);

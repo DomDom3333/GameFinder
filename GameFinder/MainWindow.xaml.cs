@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
@@ -7,14 +7,23 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Input;
 using GameFinder.Objects;
+using Wpf.Ui.Appearance;
+using Wpf.Ui.Controls;
 
 namespace GameFinder
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : FluentWindow
     {
         public MainWindow()
         {
             InitializeComponent();
+            ApplicationThemeManager.Apply(ApplicationTheme.Dark, WindowBackdropType.Mica, true);
+            ApplicationAccentColorManager.Apply(Color.FromRgb(79, 139, 255), ApplicationTheme.Dark);
+            Opacity = 0;
+            Loaded += (_, _) =>
+            {
+                BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300)));
+            };
         }
     }
 }

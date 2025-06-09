@@ -8,6 +8,7 @@ using System.Text.Json.Nodes;
 using System.Web;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 using GameFinder.Objects;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -65,6 +66,20 @@ namespace GameFinder.Controls
             ShowLogin();
         }
 
+        private async void ApiFetchButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            Config.SteamApiKey = ApiKeyBox.Text.Trim();
+            Config.SteamId = SteamIdBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(Config.SteamApiKey) || string.IsNullOrWhiteSpace(Config.SteamId))
+            {
+                MessageBox.Show("Please enter both API key and Steam ID.");
+                return;
+            }
+
+            IsLoggedIn = await TryGetGameListViaApiAsync(Config.SteamApiKey, Config.SteamId);
+        }
+
         private async Task<bool> TryGetGameListAsync()
         {
             try
@@ -90,6 +105,40 @@ namespace GameFinder.Controls
 
                 Config.GameList = ownedPackages;
                 return true;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return false;
+            }
+        }
+
+        private async Task<bool> TryGetGameListViaApiAsync(string apiKey, string steamId)
+        {
+            try
+            {
+                string url = $"https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={apiKey}&steamid={steamId}&include_appinfo=0";
+                using HttpClient client = new HttpClient();
+                string jsonResponse = await client.GetStringAsync(url);
+
+                JsonNode? games = JsonNode.Parse(jsonResponse)?["response"]?["games"];
+                if (games is not JsonArray arr)
+                {
+                    return false;
+                }
+
+                List<string> ownedPackages = new();
+                foreach (JsonNode? game in arr)
+                {
+                    string? id = game?["appid"]?.ToString();
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        ownedPackages.Add(id);
+                    }
+                }
+
+                Config.GameList = ownedPackages;
+                return ownedPackages.Count > 0;
             }
             catch (Exception e)
             {
@@ -190,9 +239,8 @@ namespace GameFinder.Controls
         internal void ShowSessionStart()
         {
             var sessionStartControl = new SessionStart();
-            // Subscribe to SessionButtonClicked event
             sessionStartControl.SessionButtonClicked += OnSessionButtonClicked;
-            SessionContentControl.Content = sessionStartControl;
+            SetContentAnimated(sessionStartControl);
         }
         
         private void OnSessionButtonClicked(object? sender, string action)
@@ -220,19 +268,41 @@ namespace GameFinder.Controls
         {
             var sessionLobbyCotrol = new SessionLobby();
             sessionLobbyCotrol.StartButtonClicked += OnSessionButtonClicked;
-            SessionContentControl.Content = sessionLobbyCotrol;
+            SetContentAnimated(sessionLobbyCotrol);
         }
 
         internal void ShowSwiping()
         {
-            SessionContentControl.Content = new Swiping();
+            var swiping = new Swiping();
+            swiping.LeaveClicked += () => ShowSessionStart();
+            SetContentAnimated(swiping);
         }
 
         internal void ShowResults(string? game)
         {
             var result = new MatchResult(game);
             result.BackClicked += () => ShowSessionStart();
-            SessionContentControl.Content = result;
+            SetContentAnimated(result);
+        }
+
+        private void SetContentAnimated(UserControl control)
+        {
+            if (SessionContentControl.Content is UIElement oldContent)
+            {
+                var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200));
+                fadeOut.Completed += (_, _) =>
+                {
+                    SessionContentControl.Content = control;
+                    control.Opacity = 0;
+                    var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+                    control.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+                };
+                oldContent.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            }
+            else
+            {
+                SessionContentControl.Content = control;
+            }
         }
 
         private void OnSessionEnded(string? game)
