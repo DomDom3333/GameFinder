@@ -1,17 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Web;
-using System.Windows;
-using GameFinder.Objects;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using Cookie = OpenQA.Selenium.Cookie;
+﻿using System.Windows;
 using System.Windows.Media;
 using Wpf.Ui.Appearance;
 
