@@ -26,28 +26,15 @@ jobs:
           dotnet publish SteamCookieFetcher/SteamCookieFetcher.csproj -c Release -o publish/SteamCookieFetcher
       - name: Create zip
         run: Compress-Archive -Path publish\* -DestinationPath ArcadeMatch.zip
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: ArcadeMatch
           path: ArcadeMatch.zip
 
-  release:
-    needs: build
-    runs-on: windows-latest
-    permissions:
-      contents: write
-      packages: write
+  image:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: ArcadeMatch
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v1.${{ github.run_number }}
-          name: Release v1.${{ github.run_number }}
-          files: ArcadeMatch.zip
+      - uses: actions/checkout@v3
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -63,3 +50,20 @@ jobs:
           file: ArcadeMatch.Server/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/server:v1.${{ github.run_number }}
+
+  release:
+    needs: [build, image]
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ArcadeMatch
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: Release v1.${{ github.run_number }}
+          files: ArcadeMatch.zip
