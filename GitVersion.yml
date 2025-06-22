@@ -1,0 +1,7 @@
+next-version: 1.0.0
+mode: Mainline
+branches:
+  main:
+    regex: ^main$
+    tag: ''
+    increment: Minor
