@@ -6,8 +6,25 @@ on:
       - main
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      semVer: ${{ steps.gitversion.outputs.semVer }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.14
+        with:
+          versionSpec: '5.x'
+      - name: Determine version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.14
+
   build:
+    needs: version
     runs-on: windows-latest
+    env:
+      VERSION: ${{ needs.version.outputs.semVer }}
     steps:
       - uses: actions/checkout@v3
       - name: Setup .NET
@@ -18,12 +35,12 @@ jobs:
         run: dotnet restore ArcadeMatch.sln
       - name: Publish projects
         run: |
-          dotnet publish ArcadeMatch.Client/ArcadeMatch.Client.csproj -c Release -o publish/ArcadeMatch.Client
-          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r win-x64 --self-contained true -o publish/ArcadeMatch.Server/win-x64
-          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-x64 --self-contained true -o publish/ArcadeMatch.Server/linux-x64
-          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm64 --self-contained true -o publish/ArcadeMatch.Server/linux-arm64
-          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm --self-contained true -o publish/ArcadeMatch.Server/linux-arm
-          dotnet publish SteamCookieFetcher/SteamCookieFetcher.csproj -c Release -o publish/SteamCookieFetcher
+          dotnet publish ArcadeMatch.Client/ArcadeMatch.Client.csproj -c Release -p:Version=$env:VERSION -o publish/ArcadeMatch.Client
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r win-x64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/win-x64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-x64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-x64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-arm64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-arm
+          dotnet publish SteamCookieFetcher/SteamCookieFetcher.csproj -c Release -p:Version=$env:VERSION -o publish/SteamCookieFetcher
       - name: Create zip
         run: Compress-Archive -Path publish\* -DestinationPath ArcadeMatch.zip
       - uses: actions/upload-artifact@v4
@@ -32,7 +49,10 @@ jobs:
           path: ArcadeMatch.zip
 
   image:
+    needs: version
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.semVer }}
     steps:
       - uses: actions/checkout@v3
       - name: Log in to GHCR
@@ -51,10 +71,10 @@ jobs:
           context: .
           file: ArcadeMatch.Server/Dockerfile
           push: true
-          tags: ghcr.io/${{ env.REPOSITORY }}/server:v1.${{ github.run_number }}
+          tags: ghcr.io/${{ env.REPOSITORY }}/server:v${{ env.VERSION }}
 
   release:
-    needs: [build, image]
+    needs: [build, image, version]
     runs-on: windows-latest
     permissions:
       contents: write
@@ -66,6 +86,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.${{ github.run_number }}
-          name: Release v1.${{ github.run_number }}
+          tag_name: v${{ needs.version.outputs.semVer }}
+          name: Release v${{ needs.version.outputs.semVer }}
           files: ArcadeMatch.zip
