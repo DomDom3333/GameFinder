@@ -12,6 +12,15 @@
                         <TextBlock Text="3️⃣ Click refresh to verify login status"/>
                         <TextBlock Text="4️⃣ Keep browser open until verification is complete"/>
                     </StackPanel>
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="🔐 Authentication Status" Margin="0,0,0,10"/>
+                        <Border x:Name="StatusBorder" CornerRadius="15" Padding="15,8" Margin="0,0,15,0" Background="#FF4444">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Fill="White" Width="12" Height="12" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="StatusTextBlock" FontWeight="Bold" Foreground="White" Text="Not Connected"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                         <Button Content="🔑 Login to Steam" Click="LoginButton_OnClick"/>
                         <Button Content="🔄 Refresh Status" Click="RefreshButton_OnClick"/>

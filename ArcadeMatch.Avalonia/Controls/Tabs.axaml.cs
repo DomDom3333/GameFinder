@@ -11,6 +11,7 @@ using System.Web;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.Media;
 using MessageBox.Avalonia;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -36,6 +37,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
             {
                 _isLoggedIn = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoggedIn)));
+                UpdateStatus();
             }
         }
     }
@@ -56,6 +58,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
     {
         base.EndInit();
         IsLoggedIn = await TryGetGameListAsync();
+        UpdateStatus();
     }
 
     async void ShowMessage(string message)
@@ -255,6 +258,23 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
     void OnSessionEnded(string? game)
     {
         Dispatcher.UIThread.Post(() => ShowResults(game));
+    }
+
+    void UpdateStatus()
+    {
+        if (StatusBorder != null && StatusTextBlock != null)
+        {
+            if (IsLoggedIn)
+            {
+                StatusBorder.Background = new SolidColorBrush(Color.Parse("#44AA44"));
+                StatusTextBlock.Text = "Connected";
+            }
+            else
+            {
+                StatusBorder.Background = new SolidColorBrush(Color.Parse("#FF4444"));
+                StatusTextBlock.Text = "Not Connected";
+            }
+        }
     }
 }
 

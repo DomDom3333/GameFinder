@@ -45,7 +45,7 @@ public partial class Swiping : UserControl
         (currentGameData, currentGameId) = await PreloadNextGameDetails();
         if (currentGameData != null)
         {
-            DisplayGameDetails(currentGameData);
+            await DisplayGameDetails(currentGameData);
             (nextGameData, nextGameId) = await PreloadNextGameDetails();
         }
         else
@@ -89,11 +89,20 @@ public partial class Swiping : UserControl
         return (null, null);
     }
 
-    void DisplayGameDetails(GameData game)
+    async Task DisplayGameDetails(GameData game)
     {
         GameNameTextBlock.SafeInvoke(() => GameNameTextBlock.Text = game.Name);
         DescriptionTextBlock.Text = game.ShortDescription;
-        GameImage.Source = new Bitmap(game.HeaderImage);
+        try
+        {
+            await using var stream = await httpClient.GetStreamAsync(game.HeaderImage);
+            GameImage.Source = new Bitmap(stream);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to load image: {ex.Message}");
+            GameImage.Source = null;
+        }
         GenresTextBlock.Text = string.Join(", ", game.Genres.Select(g => g.Description));
         LanguagesTextBlock.Text = game.SupportedLanguages?.Replace(",", ", ");
         PriceTextBlock.Text = game.Recommendations?.Total.ToString();
@@ -126,7 +135,7 @@ public partial class Swiping : UserControl
             }
             else
             {
-                DisplayGameDetails(currentGameData);
+                await DisplayGameDetails(currentGameData);
                 (nextGameData, nextGameId) = await PreloadNextGameDetails();
                 EnableButtons();
             }

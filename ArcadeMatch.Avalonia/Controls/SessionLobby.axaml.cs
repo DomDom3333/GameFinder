@@ -5,6 +5,7 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia;
 using MessageBox.Avalonia;
 using ArcadeMatch.Avalonia;
 
@@ -68,6 +69,7 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
             {
                 _sessionId = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SessionId)));
+                UpdateSessionCode();
             }
         }
     }
@@ -91,6 +93,7 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
         DataContext = this;
         UsersListBox.ItemsSource = _users;
         SessionId = App.Api.SessionId;
+        UpdateSessionCode();
         SetCurrentUser(Config.Username, App.Api.IsCurrentUserAdmin);
         App.Api.UserJoinedSession += AddUser;
         App.Api.UserLeftSession += RemoveUser;
@@ -163,9 +166,31 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
         StartButtonClicked?.Invoke(this, "StartButton");
     }
 
+    async void CopyCode_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard != null)
+        {
+            try
+            {
+                await clipboard.SetTextAsync(SessionId);
+            }
+            catch
+            {
+                // ignore clipboard errors
+            }
+        }
+    }
+
     void OnSessionStarted(IEnumerable<string> _)
     {
         Dispatcher.UIThread.Post(() => StartButtonClicked?.Invoke(this, "StartButton"));
+    }
+
+    void UpdateSessionCode()
+    {
+        if (SessionCodeText != null)
+            SessionCodeText.Text = $"Session Code: {SessionId}";
     }
 
     void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
