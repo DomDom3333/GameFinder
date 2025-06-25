@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ArcadeMatch.Avalonia.Controls.MatchResult">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" Spacing="20">
+            <TextBlock Text="🏆" FontSize="50" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="ResultText" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/>
+            <TextBlock Text="🎉 Great choice! This game was selected by your group." HorizontalAlignment="Center"/>
+            <Button Content="🏠 Back to Home" HorizontalAlignment="Center" Click="Back_Click"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
+

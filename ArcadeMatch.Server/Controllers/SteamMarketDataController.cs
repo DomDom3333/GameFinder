@@ -91,6 +91,13 @@ namespace GameFinder.Controllers
                 if (gamedata != null && gamedata.AppType == "game" && gamedata.Categories.Any(x => x.Id == 1))
                 {
                     gamedata.SupportedLanguages = Misc.RemoveHtmlTags(gamedata.SupportedLanguages);
+
+                    // fetch review summary
+                    string reviewUrl = $"https://store.steampowered.com/appreviews/{id}?json=1";
+                    string reviewJson = await _httpClient.GetStringAsync(reviewUrl);
+                    JsonDocument reviewDoc = JsonDocument.Parse(reviewJson);
+                    gamedata.ReviewSummary = reviewDoc.RootElement.GetProperty("query_summary").Deserialize<ReviewSummary>();
+
                     _memoryCache.Set(id, gamedata, TimeSpan.FromDays(7));
                     await GameDataCache.SetAsync(id, gamedata);
                     return gamedata;

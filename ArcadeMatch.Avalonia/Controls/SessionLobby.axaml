@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ArcadeMatch.Avalonia.Controls"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             x:Class="ArcadeMatch.Avalonia.Controls.SessionLobby">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" Spacing="15">
+            <TextBlock Text="Session Lobby" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+            <Border Background="#0078D4" CornerRadius="10" Padding="15,10" Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                    <TextBlock x:Name="SessionCodeText" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                    <Button Content="📋 Copy" Click="CopyCode_OnClick"/>
+                </StackPanel>
+            </Border>
+            <ListBox x:Name="UsersListBox" MinHeight="120" SelectionMode="Single">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="{x:Null}" x:CompileBindings="False">
+                        <TextBlock Text="{Binding DisplayName}" Margin="5"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                <Button Content="🚪 Leave" Click="LeaveButton_Click"/>
+                <Button Content="🚀 Start Game" Click="StartButton_OnClick"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>
+

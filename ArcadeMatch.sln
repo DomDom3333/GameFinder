@@ -1,10 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamCookieFetcher", "SteamCookieFetcher\SteamCookieFetcher.csproj", "{FF4D8487-6BED-4161-9166-EE0C06588F3A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcadeMatch.Client", "ArcadeMatch.Client/ArcadeMatch.Client.csproj", "{0B683F0D-91F3-4A57-90D3-F606B3A55E92}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcadeMatch.Client", "ArcadeMatch.Client\ArcadeMatch.Client.csproj", "{0B683F0D-91F3-4A57-90D3-F606B3A55E92}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcadeMatch.Server", "ArcadeMatch.Server\ArcadeMatch.Server.csproj", "{53C1EDF1-FAE3-43C5-851F-1BB564A146EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArcadeMatch.Avalonia", "ArcadeMatch.Avalonia\ArcadeMatch.Avalonia.csproj", "{10EF9015-6D89-47C2-8BF6-5843FE7E4DD0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +27,9 @@ Global
 		{53C1EDF1-FAE3-43C5-851F-1BB564A146EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{53C1EDF1-FAE3-43C5-851F-1BB564A146EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{53C1EDF1-FAE3-43C5-851F-1BB564A146EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10EF9015-6D89-47C2-8BF6-5843FE7E4DD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10EF9015-6D89-47C2-8BF6-5843FE7E4DD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10EF9015-6D89-47C2-8BF6-5843FE7E4DD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10EF9015-6D89-47C2-8BF6-5843FE7E4DD0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
