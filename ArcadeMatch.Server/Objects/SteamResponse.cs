@@ -24,7 +24,29 @@ public class GameData
     public List<Category> Categories { get; set; }
     [JsonPropertyName("supported_languages")]
     public string SupportedLanguages { get; set; }
+    [JsonPropertyName("price_overview")]
+    public PriceOverview? PriceOverview { get; set; }
+    [JsonPropertyName("release_date")]
+    public ReleaseDate? ReleaseDate { get; set; }
+    [JsonPropertyName("developers")]
+    public List<string>? Developers { get; set; }
+    [JsonPropertyName("publishers")]
+    public List<string>? Publishers { get; set; }
     public Recomendations Recomendations { get; set; }
+}
+
+public class PriceOverview
+{
+    [JsonPropertyName("final_formatted")]
+    public string? FinalFormatted { get; set; }
+}
+
+public class ReleaseDate
+{
+    [JsonPropertyName("coming_soon")]
+    public bool ComingSoon { get; set; }
+    [JsonPropertyName("date")]
+    public string? Date { get; set; }
 }
 
 public class Category

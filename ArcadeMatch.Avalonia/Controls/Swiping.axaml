@@ -24,6 +24,14 @@
                     <TextBlock Text="Languages Info" x:Name="LanguagesTextBlock"/>
                 </StackPanel>
                 <StackPanel>
+                    <TextBlock Text="👨‍💻 Developer"/>
+                    <TextBlock Text="Dev Info" x:Name="DeveloperTextBlock"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="📅 Release"/>
+                    <TextBlock Text="Release Info" x:Name="ReleaseTextBlock"/>
+                </StackPanel>
+                <StackPanel>
                     <TextBlock Text="💰 Pricing"/>
                     <TextBlock Text="Price Info" x:Name="PriceTextBlock"/>
                 </StackPanel>

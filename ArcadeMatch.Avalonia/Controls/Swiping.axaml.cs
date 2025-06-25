@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -95,8 +96,9 @@ public partial class Swiping : UserControl
         DescriptionTextBlock.Text = game.ShortDescription;
         try
         {
-            await using var stream = await httpClient.GetStreamAsync(game.HeaderImage);
-            GameImage.Source = new Bitmap(stream);
+            var bytes = await httpClient.GetByteArrayAsync(game.HeaderImage);
+            await using var ms = new MemoryStream(bytes);
+            GameImage.Source = new Bitmap(ms);
         }
         catch (Exception ex)
         {
@@ -105,7 +107,9 @@ public partial class Swiping : UserControl
         }
         GenresTextBlock.Text = string.Join(", ", game.Genres.Select(g => g.Description));
         LanguagesTextBlock.Text = game.SupportedLanguages?.Replace(",", ", ");
-        PriceTextBlock.Text = game.Recommendations?.Total.ToString();
+        ReleaseTextBlock.Text = game.ReleaseDate?.Date ?? "Unknown";
+        DeveloperTextBlock.Text = game.Developers != null ? string.Join(", ", game.Developers) : "";
+        PriceTextBlock.Text = game.PriceOverview?.FinalFormatted ?? "Free";
     }
 
     async void OnLikeButtonClick(object? sender, RoutedEventArgs e)
