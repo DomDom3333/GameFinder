@@ -110,6 +110,8 @@ public partial class Swiping : UserControl
         ReleaseTextBlock.Text = game.ReleaseDate?.Date ?? "Unknown";
         DeveloperTextBlock.Text = game.Developers != null ? string.Join(", ", game.Developers) : "";
         PriceTextBlock.Text = game.PriceOverview?.FinalFormatted ?? "Free";
+        MetacriticTextBlock.Text = game.Metacritic != null ? $"{game.Metacritic.Score}/100" : "N/A";
+        ReviewTextBlock.Text = game.ReviewSummary != null ? $"{game.ReviewSummary.ReviewScoreDesc} ({game.ReviewSummary.TotalReviews} reviews)" : "No reviews";
     }
 
     async void OnLikeButtonClick(object? sender, RoutedEventArgs e)

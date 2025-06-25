@@ -33,6 +33,10 @@ namespace GameFinder.Objects
         [JsonPropertyName("publishers")]
         public List<string>? Publishers { get; set; }
         public Recommendations Recommendations { get; set; }
+        [JsonPropertyName("metacritic")]
+        public Metacritic? Metacritic { get; set; }
+        [JsonIgnore]
+        public ReviewSummary? ReviewSummary { get; set; }
     }
 
     public class PriceOverview
@@ -67,5 +71,21 @@ namespace GameFinder.Objects
     {
         [JsonPropertyName("total")]
         public int Total { get; set; }
+    }
+
+    public class Metacritic
+    {
+        [JsonPropertyName("score")]
+        public int Score { get; set; }
+        [JsonPropertyName("url")]
+        public string Url { get; set; }
+    }
+
+    public class ReviewSummary
+    {
+        [JsonPropertyName("review_score_desc")]
+        public string ReviewScoreDesc { get; set; }
+        [JsonPropertyName("total_reviews")]
+        public int TotalReviews { get; set; }
     }
 }
