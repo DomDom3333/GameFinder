@@ -6,7 +6,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia;
-using MessageBox.Avalonia;
 using ArcadeMatch.Avalonia;
 
 namespace ArcadeMatch.Avalonia.Controls;

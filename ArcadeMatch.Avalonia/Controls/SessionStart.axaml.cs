@@ -1,7 +1,7 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using MessageBox.Avalonia;
+using ArcadeMatch.Avalonia.Helpers;
 using ArcadeMatch.Avalonia;
 using Avalonia.VisualTree;
 
@@ -33,7 +33,7 @@ public partial class SessionStart : UserControl
     {
         if (string.IsNullOrWhiteSpace(Config.Username))
         {
-            await MessageBoxManager.GetMessageBoxStandardWindow("Error", "Please enter a valid Username").ShowDialog((Window)this.GetVisualRoot());
+            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Please enter a valid Username");
             return;
         }
         await App.Api.CreateSessionAsync();
@@ -49,12 +49,12 @@ public partial class SessionStart : UserControl
     {
         if (SessionCodeBox.Text.Length != 4)
         {
-            await MessageBoxManager.GetMessageBoxStandardWindow("Error", "Please enter a valid Session Code").ShowDialog((Window)this.GetVisualRoot());
+            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Please enter a valid Session Code");
             return;
         }
         if (string.IsNullOrWhiteSpace(Config.Username))
         {
-            await MessageBoxManager.GetMessageBoxStandardWindow("Error", "Please enter a valid Username").ShowDialog((Window)this.GetVisualRoot());
+            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Please enter a valid Username");
             return;
         }
         await App.Api.JoinSessionAsync(SessionCodeBox.Text, Config.Username, Config.GameList);

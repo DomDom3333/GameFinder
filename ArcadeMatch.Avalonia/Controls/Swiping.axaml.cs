@@ -14,7 +14,6 @@ using GameFinder.Objects;
 using ArcadeMatch.Avalonia;
 using GameFinder;
 using Avalonia.VisualTree;
-using MessageBox.Avalonia;
 
 namespace ArcadeMatch.Avalonia.Controls;
 
@@ -33,6 +32,7 @@ public partial class Swiping : UserControl
     public Swiping()
     {
         _gameQueue = new Queue<string>(Config.CommonGames);
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
         InitializeComponent();
         App.Api.GameMatched += OnGameMatched;
         this.Unloaded += Swiping_Unloaded;
@@ -161,7 +161,8 @@ public partial class Swiping : UserControl
     void OnGameMatched(string gameId)
     {
         Dispatcher.UIThread.Post(async () =>
-            await MessageBoxManager.GetMessageBoxStandardWindow("Match", $"All players liked {gameId}!").ShowDialog((Window)this.GetVisualRoot()));
+            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Match", $"All players liked {gameId}!")
+        );
     }
 
     void Swiping_Unloaded(object? sender, RoutedEventArgs e)

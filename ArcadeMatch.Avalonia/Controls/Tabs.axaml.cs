@@ -12,7 +12,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.Media;
-using MessageBox.Avalonia;
+using ArcadeMatch.Avalonia.Helpers;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
@@ -64,7 +64,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
     async void ShowMessage(string message)
     {
         var window = (Window)this.GetVisualRoot();
-        await MessageBoxManager.GetMessageBoxStandardWindow("Info", message).ShowDialog(window);
+        await DialogHelper.ShowMessageAsync(window, "Info", message);
     }
 
     void LoginButton_OnClick(object? sender, RoutedEventArgs e)
@@ -84,7 +84,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         Config.SteamId = SteamIdBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(Config.SteamApiKey) || string.IsNullOrWhiteSpace(Config.SteamId))
         {
-            await MessageBoxManager.GetMessageBoxStandardWindow("Error", "Please enter both API key and Steam ID.").ShowDialog((Window)this.GetVisualRoot());
+            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Please enter both API key and Steam ID.");
             return;
         }
         IsLoggedIn = await TryGetGameListViaApiAsync(Config.SteamApiKey, Config.SteamId);
@@ -95,7 +95,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         var cookies = LoadCookies(cookiesFilePath);
         if (cookies == null)
         {
-            await MessageBoxManager.GetMessageBoxStandardWindow("Error", "Failed to retrieve cookies. Please log into Steam.").ShowDialog((Window)this.GetVisualRoot());
+            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Failed to retrieve cookies. Please log into Steam.");
             return;
         }
         string jsonResponse = await FetchJsonResponseWithCookies(cookies);
