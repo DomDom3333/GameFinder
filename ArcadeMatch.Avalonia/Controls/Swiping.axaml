@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ArcadeMatch.Avalonia.Controls.Swiping">
+    <Grid RowDefinitions="Auto,*">
+        <Border Background="#333" Padding="20,10">
+            <Grid>
+                <TextBlock Text="🎮 Game Discovery" FontSize="18" FontWeight="SemiBold"/>
+                <Button Content="🚪 Leave Session" HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="30" Spacing="20" HorizontalAlignment="Center" MaxWidth="900" Width="500">
+                <TextBlock Text="Game Name" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" x:Name="GameNameTextBlock"/>
+                <Border CornerRadius="12">
+                    <Image Height="200" Width="400" x:Name="GameImage" Stretch="UniformToFill"/>
+                </Border>
+                <TextBlock Text="Short Description" x:Name="DescriptionTextBlock"/>
+                <StackPanel>
+                    <TextBlock Text="🏷️ Genres"/>
+                    <TextBlock Text="Genres Info" x:Name="GenresTextBlock"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="🌍 Languages"/>
+                    <TextBlock Text="Languages Info" x:Name="LanguagesTextBlock"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="💰 Pricing"/>
+                    <TextBlock Text="Price Info" x:Name="PriceTextBlock"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,10,0,0">
+                    <Button Content="👎 Pass" Width="120" Height="50"/>
+                    <Button Content="❤️ Like" Width="120" Height="50"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
+

@@ -1,0 +1,16 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ArcadeMatch.Avalonia.Controls.SessionLobby">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" Spacing="15">
+            <TextBlock Text="Session Lobby" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+            <TextBlock Text="Session Code" HorizontalAlignment="Center"/>
+            <ListBox x:Name="UsersListBox" MinHeight="120"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                <Button Content="🚪 Leave"/>
+                <Button Content="🚀 Start Game"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>
+
