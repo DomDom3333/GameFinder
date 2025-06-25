@@ -6,7 +6,7 @@
             <TextBlock Text="🏆" FontSize="50" HorizontalAlignment="Center"/>
             <TextBlock x:Name="ResultText" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/>
             <TextBlock Text="🎉 Great choice! This game was selected by your group." HorizontalAlignment="Center"/>
-            <Button Content="🏠 Back to Home" HorizontalAlignment="Center"/>
+            <Button Content="🏠 Back to Home" HorizontalAlignment="Center" Click="Back_Click"/>
         </StackPanel>
     </Grid>
 </UserControl>

@@ -7,8 +7,8 @@
             <TextBlock Text="Session Code" HorizontalAlignment="Center"/>
             <ListBox x:Name="UsersListBox" MinHeight="120"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                <Button Content="🚪 Leave"/>
-                <Button Content="🚀 Start Game"/>
+                <Button Content="🚪 Leave" Click="LeaveButton_Click"/>
+                <Button Content="🚀 Start Game" Click="StartButton_OnClick"/>
             </StackPanel>
         </StackPanel>
     </Grid>

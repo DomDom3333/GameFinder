@@ -5,7 +5,7 @@
         <Border Background="#333" Padding="20,10">
             <Grid>
                 <TextBlock Text="🎮 Game Discovery" FontSize="18" FontWeight="SemiBold"/>
-                <Button Content="🚪 Leave Session" HorizontalAlignment="Right"/>
+                <Button Content="🚪 Leave Session" HorizontalAlignment="Right" Click="OnLeaveButtonClick"/>
             </Grid>
         </Border>
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
@@ -28,8 +28,8 @@
                     <TextBlock Text="Price Info" x:Name="PriceTextBlock"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,10,0,0">
-                    <Button Content="👎 Pass" Width="120" Height="50"/>
-                    <Button Content="❤️ Like" Width="120" Height="50"/>
+                    <Button Content="👎 Pass" Width="120" Height="50" Click="OnDislikeButtonClick" x:Name="Dislike"/>
+                    <Button Content="❤️ Like" Width="120" Height="50" Click="OnLikeButtonClick" x:Name="Like"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

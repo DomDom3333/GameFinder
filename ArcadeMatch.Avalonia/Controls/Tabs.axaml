@@ -13,8 +13,8 @@
                         <TextBlock Text="4️⃣ Keep browser open until verification is complete"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                        <Button Content="🔑 Login to Steam"/>
-                        <Button Content="🔄 Refresh Status"/>
+                        <Button Content="🔑 Login to Steam" Click="LoginButton_OnClick"/>
+                        <Button Content="🔄 Refresh Status" Click="RefreshButton_OnClick"/>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
@@ -30,7 +30,7 @@
                     <TextBox x:Name="ApiKeyBox" Margin="0,0,0,20"/>
                     <TextBlock Text="🆔 Steam ID"/>
                     <TextBox x:Name="SteamIdBox" Margin="0,0,0,20"/>
-                    <Button Content="🔄 Fetch via API" HorizontalAlignment="Center"/>
+                    <Button Content="🔄 Fetch via API" HorizontalAlignment="Center" Click="ApiFetchButton_OnClick"/>
                 </StackPanel>
             </ScrollViewer>
         </TabItem>
