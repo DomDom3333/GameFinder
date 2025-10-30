@@ -76,29 +76,17 @@ namespace GameFinder
 
                         if (Admins.TryGetValue(sessionCode, out string admin) && admin == username)
                         {
-                            if (session.Users.Count > 0)
-                            {
-                                string newAdminConn = session.Users.First();
-                                if (ConnectionUserMapping.TryGetValue(newAdminConn, out string newAdminUser))
-                                {
-                                    Admins[sessionCode] = newAdminUser;
-                                    await Clients.Client(newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
-                                    await Clients.GroupExcept(sessionCode, newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
-                                }
-                                else
-                                {
-                                    Admins.TryRemove(sessionCode, out _);
-                                }
-                            }
-                            else
-                            {
-                                Admins.TryRemove(sessionCode, out _);
-                            }
+                            await PromoteNextAdminAsync(sessionCode, session);
                         }
 
-                        if (!session.Users.Any())
+                        if (session.Users.Any())
+                        {
+                            await BroadcastSessionStateAsync(sessionCode, session);
+                        }
+                        else
                         {
                             Sessions.TryRemove(sessionCode, out _);
+                            Admins.TryRemove(sessionCode, out _);
                         }
                     }
                 }
@@ -123,7 +111,7 @@ namespace GameFinder
             {
                 // Determine if this user will be admin (first user in the session)
                 bool isAdmin;
-                if (!Admins.TryGetValue(sessionCode, out string? currentAdmin))
+                if (!Admins.TryGetValue(sessionCode, out string currentAdmin))
                 {
                     isAdmin = true;
                     Admins[sessionCode] = username;
@@ -143,6 +131,9 @@ namespace GameFinder
 
                 // Add the connection to the group immediately.
                 await Groups.AddToGroupAsync(Context.ConnectionId, sessionCode);
+
+                var (roster, adminUsername) = BuildSessionSnapshot(sessionCode, session);
+                await Clients.Client(Context.ConnectionId).SendAsync("SessionState", roster, adminUsername);
 
                 // Notify the caller about their join and also notify the group about the new user.
                 await Clients.Client(Context.ConnectionId).SendAsync("JoinedSession", username, isAdmin);
@@ -207,29 +198,17 @@ namespace GameFinder
 
                 if (Admins.TryGetValue(sessionCode, out string admin) && admin == username)
                 {
-                    if (session.Users.Count > 0)
-                    {
-                        string newAdminConn = session.Users.First();
-                        if (ConnectionUserMapping.TryGetValue(newAdminConn, out string newAdminUser))
-                        {
-                            Admins[sessionCode] = newAdminUser;
-                            await Clients.Client(newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
-                            await Clients.GroupExcept(sessionCode, newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
-                        }
-                        else
-                        {
-                            Admins.TryRemove(sessionCode, out _);
-                        }
-                    }
-                    else
-                    {
-                        Admins.TryRemove(sessionCode, out _);
-                    }
+                    await PromoteNextAdminAsync(sessionCode, session);
                 }
 
-                if (!session.Users.Any())
+                if (session.Users.Any())
+                {
+                    await BroadcastSessionStateAsync(sessionCode, session);
+                }
+                else
                 {
                     Sessions.TryRemove(sessionCode, out _);
+                    Admins.TryRemove(sessionCode, out _);
                 }
             }
         }
@@ -237,28 +216,41 @@ namespace GameFinder
         // 3. Validate game list intersection in StartSession
         public async Task StartSession(string sessionCode)
         {
-            if (Sessions.TryGetValue(sessionCode, out Session? session))
-            {
-                // Ensure there is at least one user; if only one user exists, handle it accordingly.
-                if (session.Users.Count < 1)
-                {
-                    await Clients.Client(Context.ConnectionId).SendAsync("Error", "Not enough participants to start the session.");
-                    return;
-                }
-                // Aggregate game lists from all users in the session with safety for single user scenarios.
-                HashSet<string> commonGames = session.Users
-                    .Where(id => UserGames.ContainsKey(id))
-                    .Select(id => UserGames[id])
-                    .Aggregate((previousList, nextList) =>
-                        new HashSet<string>(previousList.Intersect(nextList).OrderBy(x => Guid.NewGuid())));
-
-                session.CommonGames = commonGames;
-                await Clients.Group(sessionCode).SendAsync("SessionStarted", commonGames);
-            }
-            else
+            if (!Sessions.TryGetValue(sessionCode, out Session? session))
             {
                 await Clients.Client(Context.ConnectionId).SendAsync("Error", "Session does not exist");
+                return;
             }
+
+            if (!ConnectionUserMapping.TryGetValue(Context.ConnectionId, out string? username))
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "User is not part of the session");
+                return;
+            }
+
+            if (!Admins.TryGetValue(sessionCode, out string? adminUsername) ||
+                !string.Equals(username, adminUsername, StringComparison.Ordinal))
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "Only the session admin can start the game");
+                return;
+            }
+
+            // Ensure there is at least one user; if only one user exists, handle it accordingly.
+            if (session.Users.Count < 1)
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "Not enough participants to start the session.");
+                return;
+            }
+
+            // Aggregate game lists from all users in the session with safety for single user scenarios.
+            HashSet<string> commonGames = session.Users
+                .Where(id => UserGames.ContainsKey(id))
+                .Select(id => UserGames[id])
+                .Aggregate((previousList, nextList) =>
+                    new HashSet<string>(previousList.Intersect(nextList).OrderBy(x => Guid.NewGuid())));
+
+            session.CommonGames = commonGames;
+            await Clients.Group(sessionCode).SendAsync("SessionStarted", commonGames);
         }
 
         public async Task Swipe(string sessionCode, string game, bool swipeRight)
@@ -314,6 +306,74 @@ namespace GameFinder
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             Random random = new Random();
             return new string(Enumerable.Repeat(chars, 4).Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private static (List<string> Roster, string? AdminUsername) BuildSessionSnapshot(string sessionCode, Session session)
+        {
+            var roster = new List<string>();
+            var staleConnections = new List<string>();
+
+            foreach (var connectionId in session.Users)
+            {
+                if (ConnectionUserMapping.TryGetValue(connectionId, out string username))
+                {
+                    roster.Add(username);
+                }
+                else
+                {
+                    staleConnections.Add(connectionId);
+                }
+            }
+
+            if (staleConnections.Count > 0)
+            {
+                foreach (var stale in staleConnections)
+                {
+                    session.Users.Remove(stale);
+                }
+            }
+
+            string? adminUsername = null;
+            if (Admins.TryGetValue(sessionCode, out string storedAdmin))
+            {
+                if (roster.Contains(storedAdmin))
+                {
+                    adminUsername = storedAdmin;
+                }
+                else
+                {
+                    Admins.TryRemove(sessionCode, out _);
+                }
+            }
+
+            return (roster, adminUsername);
+        }
+
+        private async Task BroadcastSessionStateAsync(string sessionCode, Session session)
+        {
+            var (roster, adminUsername) = BuildSessionSnapshot(sessionCode, session);
+            await Clients.Group(sessionCode).SendAsync("SessionState", roster, adminUsername);
+        }
+
+        private async Task PromoteNextAdminAsync(string sessionCode, Session session)
+        {
+            string? newAdminConn = session.Users.FirstOrDefault(conn => ConnectionUserMapping.ContainsKey(conn));
+            if (newAdminConn == null)
+            {
+                Admins.TryRemove(sessionCode, out _);
+                return;
+            }
+
+            if (ConnectionUserMapping.TryGetValue(newAdminConn, out string newAdminUser))
+            {
+                Admins[sessionCode] = newAdminUser;
+                await Clients.Client(newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
+                await Clients.GroupExcept(sessionCode, newAdminConn).SendAsync("JoinedSession", newAdminUser, true);
+            }
+            else
+            {
+                Admins.TryRemove(sessionCode, out _);
+            }
         }
     }
 

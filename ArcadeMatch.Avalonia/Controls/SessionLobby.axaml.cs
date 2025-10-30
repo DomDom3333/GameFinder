@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -97,30 +98,33 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
         App.Api.UserJoinedSession += AddUser;
         App.Api.UserLeftSession += RemoveUser;
         App.Api.SessionStarted += OnSessionStarted;
+        App.Api.SessionStateReceived += OnSessionStateReceived;
+
+        if (App.Api.SessionRoster.Count > 0)
+            ApplyRoster(App.Api.SessionRoster, App.Api.CurrentAdminUser);
     }
 
     public void SetCurrentUser(string username, bool isAdmin = false)
     {
         _currentUser = username;
         IsAdmin = isAdmin;
-        var existing = _users.FirstOrDefault(u => u.Name == username);
-        if (existing == null)
+        Dispatcher.UIThread.Post(() =>
         {
-            Dispatcher.UIThread.Post(() => _users.Insert(0, new UserEntry(username, isAdmin, true)));
-        }
-        else
-        {
-            existing.IsAdmin = isAdmin;
-            existing.IsCurrent = true;
-            if (_users.IndexOf(existing) != 0)
+            foreach (var user in _users)
             {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    _users.Remove(existing);
-                    _users.Insert(0, existing);
-                });
+                bool isCurrent = user.Name == username;
+                user.IsCurrent = isCurrent;
+                if (isCurrent)
+                    user.IsAdmin = isAdmin;
             }
-        }
+
+            var existing = _users.FirstOrDefault(u => u.Name == username);
+            if (existing != null && _users.IndexOf(existing) != 0)
+            {
+                _users.Remove(existing);
+                _users.Insert(0, existing);
+            }
+        });
     }
 
     public void AddUser(string username, bool admin = false)
@@ -193,4 +197,39 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
     }
 
     void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    void OnSessionStateReceived(IReadOnlyList<string> users, string? adminName)
+    {
+        ApplyRoster(users, adminName);
+    }
+
+    void ApplyRoster(IReadOnlyList<string> users, string? adminName)
+    {
+        bool currentIsAdmin = string.Equals(adminName, _currentUser, StringComparison.Ordinal);
+
+        var entries = new List<(string Name, bool IsAdmin, bool IsCurrent)>();
+        foreach (var user in users ?? Array.Empty<string>())
+        {
+            bool isCurrent = string.Equals(user, _currentUser, StringComparison.Ordinal);
+            bool isAdmin = string.Equals(user, adminName, StringComparison.Ordinal);
+            entries.Add((user, isAdmin, isCurrent));
+        }
+
+        var ordered = entries
+            .OrderByDescending(entry => entry.IsCurrent)
+            .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            _users.Clear();
+            foreach (var (name, isAdmin, isCurrent) in ordered)
+                _users.Add(new UserEntry(name, isAdmin, isCurrent));
+
+            if (!string.IsNullOrEmpty(_currentUser) && _users.All(u => u.Name != _currentUser))
+                _users.Insert(0, new UserEntry(_currentUser, currentIsAdmin, true));
+        });
+
+        IsAdmin = currentIsAdmin;
+    }
 }

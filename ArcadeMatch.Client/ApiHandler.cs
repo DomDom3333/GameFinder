@@ -12,6 +12,9 @@ namespace GameFinder
         public string SessionId { get; private set; } = string.Empty;
         private string _currentUser = string.Empty;
         public bool IsCurrentUserAdmin { get; private set; }
+        private readonly List<string> _sessionRoster = new();
+        public IReadOnlyList<string> SessionRoster => _sessionRoster.AsReadOnly();
+        public string? CurrentAdminUser { get; private set; }
 
         // Define events
         public event Action<string>? SessionCreated;
@@ -22,6 +25,7 @@ namespace GameFinder
         public event Action<string>? GameMatched;
         public event Action<string>? ErrorOccurred;
         public event Action<string?>? SessionEnded;
+        public event Action<IReadOnlyList<string>, string?>? SessionStateReceived;
 
         public async Task Connect(string[] args)
         {
@@ -53,17 +57,58 @@ namespace GameFinder
                 {
                     Console.WriteLine("User is admin");
                 }
+                if (!_sessionRoster.Contains(username))
+                {
+                    _sessionRoster.Add(username);
+                }
+                if (admin)
+                {
+                    CurrentAdminUser = username;
+                }
+                if (!admin && string.Equals(CurrentAdminUser, username, StringComparison.Ordinal))
+                {
+                    CurrentAdminUser = null;
+                }
                 if (username == _currentUser)
                 {
                     IsCurrentUserAdmin = admin;
                 }
+                else if (!string.IsNullOrEmpty(_currentUser))
+                {
+                    IsCurrentUserAdmin = string.Equals(CurrentAdminUser, _currentUser, StringComparison.Ordinal);
+                }
                 UserJoinedSession?.Invoke(username, admin);
+            });
+
+            connection.On<List<string>, string?>("SessionState", (users, adminUsername) =>
+            {
+                _sessionRoster.Clear();
+                if (users != null)
+                {
+                    _sessionRoster.AddRange(users);
+                }
+                CurrentAdminUser = adminUsername;
+                if (!string.IsNullOrEmpty(_currentUser))
+                {
+                    IsCurrentUserAdmin = string.Equals(CurrentAdminUser, _currentUser, StringComparison.Ordinal);
+                }
+                var snapshot = _sessionRoster.ToList();
+                SessionStateReceived?.Invoke(snapshot, CurrentAdminUser);
             });
 
             // Assuming a "LeftSession" event exists in your SignalR hub
             connection.On<string>("LeftSession", (username) =>
             {
                 Console.WriteLine($"{username} left");
+                _sessionRoster.RemoveAll(user => string.Equals(user, username, StringComparison.Ordinal));
+                if (string.Equals(CurrentAdminUser, username, StringComparison.Ordinal))
+                {
+                    CurrentAdminUser = null;
+                }
+                if (!string.IsNullOrEmpty(_currentUser))
+                {
+                    IsCurrentUserAdmin = string.Equals(CurrentAdminUser, _currentUser, StringComparison.Ordinal);
+                }
                 UserLeftSession?.Invoke(username);
             });
 
@@ -124,6 +169,8 @@ namespace GameFinder
             _currentUser = string.Empty;
             IsCurrentUserAdmin = false;
             Config.CommonGames.Clear();
+            _sessionRoster.Clear();
+            CurrentAdminUser = null;
         }
 
         public async Task StartSession(string sessionCode)
@@ -145,6 +192,8 @@ namespace GameFinder
             SessionId = string.Empty;
             _currentUser = string.Empty;
             IsCurrentUserAdmin = false;
+            _sessionRoster.Clear();
+            CurrentAdminUser = null;
         }
     }
 }
