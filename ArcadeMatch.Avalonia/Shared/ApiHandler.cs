@@ -43,8 +43,27 @@ public class ApiHandler
         });
         connection.On<string, bool>("JoinedSession", (username, admin) =>
         {
+            if (!_sessionRoster.Contains(username))
+                _sessionRoster.Add(username);
+
+            if (admin)
+            {
+                CurrentAdminUser = username;
+            }
+            if (!admin && string.Equals(CurrentAdminUser, username, StringComparison.Ordinal))
+            {
+                CurrentAdminUser = null;
+            }
+
             if (username == _currentUser)
+            {
                 IsCurrentUserAdmin = admin;
+            }
+            else if (!string.IsNullOrEmpty(_currentUser))
+            {
+                IsCurrentUserAdmin = string.Equals(CurrentAdminUser, _currentUser, StringComparison.Ordinal);
+            }
+
             UserJoinedSession?.Invoke(username, admin);
         });
         connection.On<List<string>, string?>("SessionState", (users, adminUsername) =>
@@ -58,7 +77,20 @@ public class ApiHandler
             var snapshot = _sessionRoster.ToList();
             SessionStateReceived?.Invoke(snapshot, CurrentAdminUser);
         });
-        connection.On<string>("LeftSession", username => UserLeftSession?.Invoke(username));
+        connection.On<string>("LeftSession", username =>
+        {
+            _sessionRoster.RemoveAll(user => string.Equals(user, username, StringComparison.Ordinal));
+            if (string.Equals(CurrentAdminUser, username, StringComparison.Ordinal))
+            {
+                CurrentAdminUser = null;
+            }
+            if (!string.IsNullOrEmpty(_currentUser))
+            {
+                IsCurrentUserAdmin = string.Equals(CurrentAdminUser, _currentUser, StringComparison.Ordinal);
+            }
+
+            UserLeftSession?.Invoke(username);
+        });
         connection.On<IEnumerable<string>>("SessionStarted", commonGames =>
         {
             Config.CommonGames = commonGames.ToList();

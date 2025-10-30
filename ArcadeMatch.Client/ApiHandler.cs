@@ -57,9 +57,25 @@ namespace GameFinder
                 {
                     Console.WriteLine("User is admin");
                 }
+                if (!_sessionRoster.Contains(username))
+                {
+                    _sessionRoster.Add(username);
+                }
+                if (admin)
+                {
+                    CurrentAdminUser = username;
+                }
+                if (!admin && string.Equals(CurrentAdminUser, username, StringComparison.Ordinal))
+                {
+                    CurrentAdminUser = null;
+                }
                 if (username == _currentUser)
                 {
                     IsCurrentUserAdmin = admin;
+                }
+                else if (!string.IsNullOrEmpty(_currentUser))
+                {
+                    IsCurrentUserAdmin = string.Equals(CurrentAdminUser, _currentUser, StringComparison.Ordinal);
                 }
                 UserJoinedSession?.Invoke(username, admin);
             });
@@ -84,6 +100,15 @@ namespace GameFinder
             connection.On<string>("LeftSession", (username) =>
             {
                 Console.WriteLine($"{username} left");
+                _sessionRoster.RemoveAll(user => string.Equals(user, username, StringComparison.Ordinal));
+                if (string.Equals(CurrentAdminUser, username, StringComparison.Ordinal))
+                {
+                    CurrentAdminUser = null;
+                }
+                if (!string.IsNullOrEmpty(_currentUser))
+                {
+                    IsCurrentUserAdmin = string.Equals(CurrentAdminUser, _currentUser, StringComparison.Ordinal);
+                }
                 UserLeftSession?.Invoke(username);
             });
 
