@@ -123,7 +123,7 @@ namespace GameFinder
             {
                 // Determine if this user will be admin (first user in the session)
                 bool isAdmin;
-                if (!Admins.TryGetValue(sessionCode, out string? currentAdmin))
+                if (!Admins.TryGetValue(sessionCode, out string currentAdmin))
                 {
                     isAdmin = true;
                     Admins[sessionCode] = username;
@@ -143,6 +143,22 @@ namespace GameFinder
 
                 // Add the connection to the group immediately.
                 await Groups.AddToGroupAsync(Context.ConnectionId, sessionCode);
+
+                string? adminUsername = null;
+                if (Admins.TryGetValue(sessionCode, out string adminUser))
+                {
+                    adminUsername = adminUser;
+                }
+                var roster = new List<string>();
+                foreach (var connectionId in session.Users)
+                {
+                    if (ConnectionUserMapping.TryGetValue(connectionId, out string existingUser))
+                    {
+                        roster.Add(existingUser);
+                    }
+                }
+
+                await Clients.Client(Context.ConnectionId).SendAsync("SessionState", roster, adminUsername);
 
                 // Notify the caller about their join and also notify the group about the new user.
                 await Clients.Client(Context.ConnectionId).SendAsync("JoinedSession", username, isAdmin);
