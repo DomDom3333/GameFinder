@@ -216,28 +216,41 @@ namespace GameFinder
         // 3. Validate game list intersection in StartSession
         public async Task StartSession(string sessionCode)
         {
-            if (Sessions.TryGetValue(sessionCode, out Session? session))
-            {
-                // Ensure there is at least one user; if only one user exists, handle it accordingly.
-                if (session.Users.Count < 1)
-                {
-                    await Clients.Client(Context.ConnectionId).SendAsync("Error", "Not enough participants to start the session.");
-                    return;
-                }
-                // Aggregate game lists from all users in the session with safety for single user scenarios.
-                HashSet<string> commonGames = session.Users
-                    .Where(id => UserGames.ContainsKey(id))
-                    .Select(id => UserGames[id])
-                    .Aggregate((previousList, nextList) =>
-                        new HashSet<string>(previousList.Intersect(nextList).OrderBy(x => Guid.NewGuid())));
-
-                session.CommonGames = commonGames;
-                await Clients.Group(sessionCode).SendAsync("SessionStarted", commonGames);
-            }
-            else
+            if (!Sessions.TryGetValue(sessionCode, out Session? session))
             {
                 await Clients.Client(Context.ConnectionId).SendAsync("Error", "Session does not exist");
+                return;
             }
+
+            if (!ConnectionUserMapping.TryGetValue(Context.ConnectionId, out string? username))
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "User is not part of the session");
+                return;
+            }
+
+            if (!Admins.TryGetValue(sessionCode, out string? adminUsername) ||
+                !string.Equals(username, adminUsername, StringComparison.Ordinal))
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "Only the session admin can start the game");
+                return;
+            }
+
+            // Ensure there is at least one user; if only one user exists, handle it accordingly.
+            if (session.Users.Count < 1)
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "Not enough participants to start the session.");
+                return;
+            }
+
+            // Aggregate game lists from all users in the session with safety for single user scenarios.
+            HashSet<string> commonGames = session.Users
+                .Where(id => UserGames.ContainsKey(id))
+                .Select(id => UserGames[id])
+                .Aggregate((previousList, nextList) =>
+                    new HashSet<string>(previousList.Intersect(nextList).OrderBy(x => Guid.NewGuid())));
+
+            session.CommonGames = commonGames;
+            await Clients.Group(sessionCode).SendAsync("SessionStarted", commonGames);
         }
 
         public async Task Swipe(string sessionCode, string game, bool swipeRight)
