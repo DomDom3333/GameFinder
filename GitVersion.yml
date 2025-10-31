@@ -4,6 +4,5 @@ branches:
     regex: ^main$
     tag: ''
     increment: Patch
-    is-main-branch: true
 ignore:
   sha: []
