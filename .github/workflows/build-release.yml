@@ -45,7 +45,7 @@ jobs:
           - os: ubuntu-latest
             client-runtime: linux-musl-arm64
             artifact-name: ArcadeMatch.Client-Linux-Alpine-ARM64.zip
-          - os: macos-latest
+          - os: macos-13
             client-runtime: osx-x64
             artifact-name: ArcadeMatch.Client-macOS-Intel.zip
           - os: macos-latest
@@ -63,7 +63,10 @@ jobs:
         with:
           dotnet-version: 9.0.x
       - name: Restore dependencies
-        run: dotnet restore ArcadeMatch.sln
+        shell: bash
+        run: |
+          dotnet restore ArcadeMatch.Avalonia/ArcadeMatch.Avalonia.csproj
+          dotnet restore SteamCookieFetcher/SteamCookieFetcher.csproj
       - name: Publish client
         shell: bash
         run: |
@@ -94,7 +97,7 @@ jobs:
         with:
           dotnet-version: 9.0.x
       - name: Restore dependencies
-        run: dotnet restore ArcadeMatch.sln
+        run: dotnet restore ArcadeMatch.Server/ArcadeMatch.Server.csproj
       - name: Publish server
         run: |
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r win-x64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/win-x64
