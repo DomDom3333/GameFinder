@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:ArcadeMatch.Avalonia.Controls"
              xmlns:sys="clr-namespace:System;assembly=System.Runtime"
-             x:Class="ArcadeMatch.Avalonia.Controls.SessionLobby">
+             x:Class="ArcadeMatch.Avalonia.Controls.SessionLobby"
+             x:CompileBindings="False">
     <Grid>
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" Spacing="15">
             <TextBlock Text="Session Lobby" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>

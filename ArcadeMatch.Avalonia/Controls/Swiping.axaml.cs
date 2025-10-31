@@ -164,10 +164,14 @@ public partial class Swiping : UserControl
         Dislike.IsEnabled = true;
     }
 
-    void OnGameMatched(string gameId)
+    async void OnGameMatched(string gameId)
     {
+        var totalPlayers = App.Api.SessionRoster.Count;
+        var match = await App.Api.ResolveGameAsync(gameId, totalPlayers, totalPlayers);
+        string displayName = match?.Data.Name ?? gameId;
+        string likesDisplay = match?.LikesDisplay ?? "Everyone liked this pick!";
         Dispatcher.UIThread.Post(async () =>
-            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Match", $"All players liked {gameId}!")
+            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Match", $"{displayName}\n{likesDisplay}")
         );
     }
 
