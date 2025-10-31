@@ -39,18 +39,28 @@ jobs:
         run: dotnet restore ArcadeMatch.sln
       - name: Publish projects
         run: |
-          dotnet publish ArcadeMatch.Client/ArcadeMatch.Client.csproj -c Release -p:Version=$env:VERSION -o publish/ArcadeMatch.Client
+          dotnet publish ArcadeMatch.Avalonia/ArcadeMatch.Avalonia.csproj -c Release -p:Version=$env:VERSION -o publish/ArcadeMatch.Client
+          dotnet publish SteamCookieFetcher/SteamCookieFetcher.csproj -c Release -p:Version=$env:VERSION -o publish/ArcadeMatch.Client/SteamCookieFetcher
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r win-x64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/win-x64
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-x64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-x64
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-arm64
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-arm
-          dotnet publish SteamCookieFetcher/SteamCookieFetcher.csproj -c Release -p:Version=$env:VERSION -o publish/SteamCookieFetcher
-      - name: Create zip
-        run: Compress-Archive -Path publish\* -DestinationPath ArcadeMatch.zip
+      - name: Create zip files
+        run: |
+          Compress-Archive -Path publish\ArcadeMatch.Client\* -DestinationPath ArcadeMatch.Client.zip
+          Compress-Archive -Path publish\ArcadeMatch.Server\win-x64\* -DestinationPath ArcadeMatch.Server-win-x64.zip
+          Compress-Archive -Path publish\ArcadeMatch.Server\linux-x64\* -DestinationPath ArcadeMatch.Server-linux-x64.zip
+          Compress-Archive -Path publish\ArcadeMatch.Server\linux-arm64\* -DestinationPath ArcadeMatch.Server-linux-arm64.zip
+          Compress-Archive -Path publish\ArcadeMatch.Server\linux-arm\* -DestinationPath ArcadeMatch.Server-linux-arm.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: ArcadeMatch
-          path: ArcadeMatch.zip
+          name: release-artifacts
+          path: |
+            ArcadeMatch.Client.zip
+            ArcadeMatch.Server-win-x64.zip
+            ArcadeMatch.Server-linux-x64.zip
+            ArcadeMatch.Server-linux-arm64.zip
+            ArcadeMatch.Server-linux-arm.zip
 
   image:
     needs: version
@@ -91,10 +101,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: ArcadeMatch
+          name: release-artifacts
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.version.outputs.semVer }}
           name: Release v${{ needs.version.outputs.semVer }}
-          files: ArcadeMatch.zip
+          files: |
+            ArcadeMatch.Client.zip
+            ArcadeMatch.Server-win-x64.zip
+            ArcadeMatch.Server-linux-x64.zip
+            ArcadeMatch.Server-linux-arm64.zip
+            ArcadeMatch.Server-linux-arm.zip
