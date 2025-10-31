@@ -24,7 +24,34 @@ jobs:
 
   build:
     needs: version
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            client-runtime: win-x64
+            artifact-name: ArcadeMatch.Client-Windows-x64.zip
+          - os: ubuntu-latest
+            client-runtime: linux-x64
+            artifact-name: ArcadeMatch.Client-Linux-x64.zip
+          - os: ubuntu-latest
+            client-runtime: linux-arm64
+            artifact-name: ArcadeMatch.Client-Linux-ARM64.zip
+          - os: ubuntu-latest
+            client-runtime: linux-arm
+            artifact-name: ArcadeMatch.Client-Linux-ARM.zip
+          - os: ubuntu-latest
+            client-runtime: linux-musl-x64
+            artifact-name: ArcadeMatch.Client-Linux-Alpine-x64.zip
+          - os: ubuntu-latest
+            client-runtime: linux-musl-arm64
+            artifact-name: ArcadeMatch.Client-Linux-Alpine-ARM64.zip
+          - os: macos-latest
+            client-runtime: osx-x64
+            artifact-name: ArcadeMatch.Client-macOS-Intel.zip
+          - os: macos-latest
+            client-runtime: osx-arm64
+            artifact-name: ArcadeMatch.Client-macOS-AppleSilicon.zip
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: ${{ needs.version.outputs.semVer }}
     steps:
@@ -37,30 +64,69 @@ jobs:
           dotnet-version: 9.0.x
       - name: Restore dependencies
         run: dotnet restore ArcadeMatch.sln
-      - name: Publish projects
+      - name: Publish client
+        shell: bash
         run: |
-          dotnet publish ArcadeMatch.Avalonia/ArcadeMatch.Avalonia.csproj -c Release -p:Version=$env:VERSION -o publish/ArcadeMatch.Client
-          dotnet publish SteamCookieFetcher/SteamCookieFetcher.csproj -c Release -p:Version=$env:VERSION -o publish/ArcadeMatch.Client/SteamCookieFetcher
-          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r win-x64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/win-x64
-          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-x64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-x64
-          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm64 --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-arm64
-          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm --self-contained true -p:Version=$env:VERSION -o publish/ArcadeMatch.Server/linux-arm
-      - name: Create zip files
-        run: |
-          Compress-Archive -Path publish\ArcadeMatch.Client\* -DestinationPath ArcadeMatch.Client.zip
-          Compress-Archive -Path publish\ArcadeMatch.Server\win-x64\* -DestinationPath ArcadeMatch.Server-win-x64.zip
-          Compress-Archive -Path publish\ArcadeMatch.Server\linux-x64\* -DestinationPath ArcadeMatch.Server-linux-x64.zip
-          Compress-Archive -Path publish\ArcadeMatch.Server\linux-arm64\* -DestinationPath ArcadeMatch.Server-linux-arm64.zip
-          Compress-Archive -Path publish\ArcadeMatch.Server\linux-arm\* -DestinationPath ArcadeMatch.Server-linux-arm.zip
+          dotnet publish ArcadeMatch.Avalonia/ArcadeMatch.Avalonia.csproj -c Release -r ${{ matrix.client-runtime }} --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Client
+          dotnet publish SteamCookieFetcher/SteamCookieFetcher.csproj -c Release -r ${{ matrix.client-runtime }} --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Client/SteamCookieFetcher
+      - name: Create client zip (Windows)
+        if: matrix.os == 'windows-latest'
+        run: Compress-Archive -Path publish\ArcadeMatch.Client\* -DestinationPath ${{ matrix.artifact-name }}
+      - name: Create client zip (Unix)
+        if: matrix.os != 'windows-latest'
+        run: cd publish/ArcadeMatch.Client && zip -r ../../${{ matrix.artifact-name }} *
       - uses: actions/upload-artifact@v4
         with:
-          name: release-artifacts
+          name: client-${{ matrix.client-runtime }}
+          path: ${{ matrix.artifact-name }}
+
+  build-server:
+    needs: version
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.semVer }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore dependencies
+        run: dotnet restore ArcadeMatch.sln
+      - name: Publish server
+        run: |
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r win-x64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/win-x64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-x64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/linux-x64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/linux-arm64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/linux-arm
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-musl-x64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/linux-musl-x64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-musl-arm64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/linux-musl-arm64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r osx-x64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/osx-x64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r osx-arm64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/osx-arm64
+      - name: Create server zip files
+        run: |
+          cd publish/ArcadeMatch.Server/win-x64 && zip -r ../../../ArcadeMatch.Server-Windows-x64.zip * && cd ../../..
+          cd publish/ArcadeMatch.Server/linux-x64 && zip -r ../../../ArcadeMatch.Server-Linux-x64.zip * && cd ../../..
+          cd publish/ArcadeMatch.Server/linux-arm64 && zip -r ../../../ArcadeMatch.Server-Linux-ARM64.zip * && cd ../../..
+          cd publish/ArcadeMatch.Server/linux-arm && zip -r ../../../ArcadeMatch.Server-Linux-ARM.zip * && cd ../../..
+          cd publish/ArcadeMatch.Server/linux-musl-x64 && zip -r ../../../ArcadeMatch.Server-Linux-Alpine-x64.zip * && cd ../../..
+          cd publish/ArcadeMatch.Server/linux-musl-arm64 && zip -r ../../../ArcadeMatch.Server-Linux-Alpine-ARM64.zip * && cd ../../..
+          cd publish/ArcadeMatch.Server/osx-x64 && zip -r ../../../ArcadeMatch.Server-macOS-Intel.zip * && cd ../../..
+          cd publish/ArcadeMatch.Server/osx-arm64 && zip -r ../../../ArcadeMatch.Server-macOS-AppleSilicon.zip * && cd ../../..
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-artifacts
           path: |
-            ArcadeMatch.Client.zip
-            ArcadeMatch.Server-win-x64.zip
-            ArcadeMatch.Server-linux-x64.zip
-            ArcadeMatch.Server-linux-arm64.zip
-            ArcadeMatch.Server-linux-arm.zip
+            ArcadeMatch.Server-Windows-x64.zip
+            ArcadeMatch.Server-Linux-x64.zip
+            ArcadeMatch.Server-Linux-ARM64.zip
+            ArcadeMatch.Server-Linux-ARM.zip
+            ArcadeMatch.Server-Linux-Alpine-x64.zip
+            ArcadeMatch.Server-Linux-Alpine-ARM64.zip
+            ArcadeMatch.Server-macOS-Intel.zip
+            ArcadeMatch.Server-macOS-AppleSilicon.zip
 
   image:
     needs: version
@@ -93,8 +159,8 @@ jobs:
           tags: ghcr.io/${{ env.REPOSITORY }}:v${{ env.VERSION }}
 
   release:
-    needs: [build, image, version]
-    runs-on: windows-latest
+    needs: [build, build-server, image, version]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
@@ -105,15 +171,27 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
-          name: release-artifacts
+          pattern: '*'
+          merge-multiple: true
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.version.outputs.semVer }}
           name: Release v${{ needs.version.outputs.semVer }}
           files: |
-            ArcadeMatch.Client.zip
-            ArcadeMatch.Server-win-x64.zip
-            ArcadeMatch.Server-linux-x64.zip
-            ArcadeMatch.Server-linux-arm64.zip
-            ArcadeMatch.Server-linux-arm.zip
+            ArcadeMatch.Client-Windows-x64.zip
+            ArcadeMatch.Client-Linux-x64.zip
+            ArcadeMatch.Client-Linux-ARM64.zip
+            ArcadeMatch.Client-Linux-ARM.zip
+            ArcadeMatch.Client-Linux-Alpine-x64.zip
+            ArcadeMatch.Client-Linux-Alpine-ARM64.zip
+            ArcadeMatch.Client-macOS-Intel.zip
+            ArcadeMatch.Client-macOS-AppleSilicon.zip
+            ArcadeMatch.Server-Windows-x64.zip
+            ArcadeMatch.Server-Linux-x64.zip
+            ArcadeMatch.Server-Linux-ARM64.zip
+            ArcadeMatch.Server-Linux-ARM.zip
+            ArcadeMatch.Server-Linux-Alpine-x64.zip
+            ArcadeMatch.Server-Linux-Alpine-ARM64.zip
+            ArcadeMatch.Server-macOS-Intel.zip
+            ArcadeMatch.Server-macOS-AppleSilicon.zip
