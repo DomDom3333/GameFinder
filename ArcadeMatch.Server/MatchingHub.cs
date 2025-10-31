@@ -292,8 +292,25 @@ namespace GameFinder
         {
             if (Sessions.TryGetValue(sessionCode, out Session? session))
             {
-                string? result = session.MatchedGames.FirstOrDefault();
-                await Clients.Group(sessionCode).SendAsync("SessionEnded", result);
+                int totalParticipants = Math.Max(
+                    session.Users.Count,
+                    session.GameSwipes
+                        .SelectMany(swipes => swipes.Value.Keys)
+                        .Distinct()
+                        .Count());
+
+                var results = session.GameSwipes
+                    .Select(kvp =>
+                    {
+                        int likes = kvp.Value.Values.Count(swiped => swiped);
+                        return new MatchedGameSummary(kvp.Key, likes, totalParticipants);
+                    })
+                    .Where(summary => summary.Likes > 0)
+                    .OrderByDescending(summary => summary.Likes)
+                    .ThenBy(summary => summary.Id, StringComparer.Ordinal)
+                    .ToList();
+
+                await Clients.Group(sessionCode).SendAsync("SessionEnded", results);
             }
             else
             {
@@ -390,4 +407,6 @@ namespace GameFinder
         // Stores common games when session starts
         public HashSet<string> CommonGames { get; set; } = new();
     }
+
+    public record MatchedGameSummary(string Id, int Likes, int TotalParticipants);
 }

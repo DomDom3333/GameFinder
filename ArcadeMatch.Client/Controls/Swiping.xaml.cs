@@ -230,10 +230,14 @@ public partial class Swiping : UserControl
                 OnLikeButtonClick(sender, e);
         }
 
-        private void OnGameMatched(string gameId)
+        private async void OnGameMatched(string gameId)
         {
+            var totalPlayers = App.Api.SessionRoster.Count;
+            var match = await App.Api.ResolveGameAsync(gameId, totalPlayers, totalPlayers);
+            string displayName = match?.Data.Name ?? gameId;
+            string likesDisplay = match?.LikesDisplay ?? "Everyone liked this pick!";
             Dispatcher.Invoke(() =>
-                MessageBox.Show($"All players liked {gameId}!", "Match", MessageBoxButton.OK, MessageBoxImage.Information));
+                MessageBox.Show($"{displayName}\n{likesDisplay}", "Match", MessageBoxButton.OK, MessageBoxImage.Information));
         }
 
         private void Swiping_Unloaded(object sender, RoutedEventArgs e)

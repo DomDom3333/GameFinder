@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -278,9 +279,9 @@ namespace GameFinder.Controls
             SetContentAnimated(swiping);
         }
 
-        internal void ShowResults(string? game)
+        internal void ShowResults(IReadOnlyList<MatchedGame> games)
         {
-            var result = new MatchResult(game);
+            var result = new MatchResult(games);
             result.BackClicked += () => ShowSessionStart();
             SetContentAnimated(result);
         }
@@ -305,9 +306,9 @@ namespace GameFinder.Controls
             }
         }
 
-        private void OnSessionEnded(string? game)
+        private void OnSessionEnded(IReadOnlyList<MatchedGame> games)
         {
-            Dispatcher.Invoke(() => ShowResults(game));
+            Dispatcher.Invoke(() => ShowResults(games));
         }
 
         protected virtual void OnPropertyChanged(string propertyName)

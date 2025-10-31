@@ -248,16 +248,16 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         SessionContentControl.Content = swiping;
     }
 
-    internal void ShowResults(string? game)
+    internal void ShowResults(IReadOnlyList<MatchedGame> games)
     {
-        var result = new MatchResult(game);
+        var result = new MatchResult(games);
         result.BackClicked += () => ShowSessionStart();
         SessionContentControl.Content = result;
     }
 
-    void OnSessionEnded(string? game)
+    void OnSessionEnded(IReadOnlyList<MatchedGame> games)
     {
-        Dispatcher.UIThread.Post(() => ShowResults(game));
+        Dispatcher.UIThread.Post(() => ShowResults(games));
     }
 
     void UpdateStatus()

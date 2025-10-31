@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using GameFinder.Objects;
 
 namespace GameFinder
 {
@@ -16,6 +19,9 @@ namespace GameFinder
         public IReadOnlyList<string> SessionRoster => _sessionRoster.AsReadOnly();
         public string? CurrentAdminUser { get; private set; }
 
+        private static readonly HttpClient HttpClient = new();
+        private const string SteamMarketEndpoint = "http://127.0.0.1:5170/SteamMarketData/";
+
         // Define events
         public event Action<string>? SessionCreated;
         public event Action<string, bool>? UserJoinedSession;
@@ -24,7 +30,7 @@ namespace GameFinder
         public event Action<string, string, bool>? UserSwiped;
         public event Action<string>? GameMatched;
         public event Action<string>? ErrorOccurred;
-        public event Action<string?>? SessionEnded;
+        public event Action<IReadOnlyList<MatchedGame>>? SessionEnded;
         public event Action<IReadOnlyList<string>, string?>? SessionStateReceived;
 
         public async Task Connect(string[] args)
@@ -131,10 +137,12 @@ namespace GameFinder
                 GameMatched?.Invoke(game);
             });
 
-            connection.On<string?>("SessionEnded", (game) =>
+            connection.On<List<MatchedGameSummary>?>("SessionEnded", async (games) =>
             {
-                Console.WriteLine($"Session ended. Matched game: {game}");
-                SessionEnded?.Invoke(game);
+                var resolved = await ResolveGamesAsync(games ?? Enumerable.Empty<MatchedGameSummary>()).ConfigureAwait(false);
+                Console.WriteLine("Session ended. Matched games: " +
+                    string.Join(", ", resolved.Select(g => $"{g.Data.Name} ({g.Likes}/{g.TotalParticipants})")));
+                SessionEnded?.Invoke(resolved);
             });
 
             connection.On<string>("Error", (errorMessage) =>
@@ -194,6 +202,68 @@ namespace GameFinder
             IsCurrentUserAdmin = false;
             _sessionRoster.Clear();
             CurrentAdminUser = null;
+        }
+
+        public async Task<IReadOnlyList<MatchedGame>> ResolveGamesAsync(IEnumerable<MatchedGameSummary> gameSummaries)
+        {
+            var resolved = new List<MatchedGame>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var summary in gameSummaries ?? Enumerable.Empty<MatchedGameSummary>())
+            {
+                var id = summary.Id;
+
+                if (string.IsNullOrWhiteSpace(id) || !seen.Add(id))
+                {
+                    continue;
+                }
+
+                if (GameDataCache.TryGet(id, out GameData? cached) && cached != null)
+                {
+                    resolved.Add(new MatchedGame(id, cached, summary.Likes, summary.TotalParticipants));
+                    continue;
+                }
+
+                try
+                {
+                    var json = await HttpClient.GetStringAsync($"{SteamMarketEndpoint}{id}").ConfigureAwait(false);
+                    if (string.IsNullOrWhiteSpace(json))
+                    {
+                        continue;
+                    }
+
+                    var data = JsonSerializer.Deserialize<GameData>(json);
+                    if (data == null)
+                    {
+                        continue;
+                    }
+
+                    await GameDataCache.SetAsync(id, data).ConfigureAwait(false);
+                    resolved.Add(new MatchedGame(id, data, summary.Likes, summary.TotalParticipants));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to resolve game {id}: {ex.Message}");
+                }
+            }
+
+            return resolved;
+        }
+
+        public async Task<MatchedGame?> ResolveGameAsync(string gameId, int likes = 0, int totalParticipants = 0)
+        {
+            if (totalParticipants <= 0)
+            {
+                totalParticipants = _sessionRoster.Count;
+            }
+
+            if (likes <= 0 && totalParticipants > 0)
+            {
+                likes = totalParticipants;
+            }
+
+            var games = await ResolveGamesAsync(new[] { new MatchedGameSummary(gameId, likes, totalParticipants) }).ConfigureAwait(false);
+            return games.FirstOrDefault();
         }
     }
 }

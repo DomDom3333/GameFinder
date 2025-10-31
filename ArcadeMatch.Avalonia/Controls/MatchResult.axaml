@@ -1,13 +1,61 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="ArcadeMatch.Avalonia.Controls.MatchResult">
+             xmlns:objects="clr-namespace:GameFinder.Objects;assembly=ArcadeMatch.Avalonia"
+             x:Class="ArcadeMatch.Avalonia.Controls.MatchResult"
+             x:CompileBindings="False">
     <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" Spacing="20">
-            <TextBlock Text="🏆" FontSize="50" HorizontalAlignment="Center"/>
-            <TextBlock x:Name="ResultText" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/>
-            <TextBlock Text="🎉 Great choice! This game was selected by your group." HorizontalAlignment="Center"/>
-            <Button Content="🏠 Back to Home" HorizontalAlignment="Center" Click="Back_Click"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Background="#141822">
+            <StackPanel Margin="24" Spacing="12" HorizontalAlignment="Center">
+                <TextBlock x:Name="ResultText" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" />
+                <TextBlock x:Name="SubtitleText" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="420" />
+                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                    <Button x:Name="ShareButton" Content="📋 Copy match list" Click="CopyMatches_Click" />
+                    <Button Content="🏠 Back to Home" Click="Back_Click" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Margin="24" Background="#1F2433" CornerRadius="12" Padding="12">
+            <ScrollViewer x:Name="MatchesScrollViewer" VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="MatchesList">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel HorizontalAlignment="Center" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="8" Width="220" Background="#262C3E" CornerRadius="10">
+                                <StackPanel>
+                                    <Border Height="140" ClipToBounds="True">
+                                        <Image Stretch="UniformToFill" Source="{Binding Cover}" />
+                                    </Border>
+                                    <StackPanel Margin="12" Spacing="6">
+                                        <TextBlock Text="{Binding Game.Data.Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Game.Data.ShortDescription}" Foreground="#ADB4C5" FontSize="12" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Game.LikesDisplay}" Foreground="#FFD166" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Game.ParticipantsDisplay}" Foreground="#ADB4C5" FontSize="11" VerticalAlignment="Center" />
+                                            <Button Grid.Column="1" Content="🔗" Tag="{Binding}" ToolTip.Tip="Open on Steam" Click="OpenSteam_Click" />
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <StackPanel x:Name="NoMatchesPanel" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+            <TextBlock Text="😕" FontSize="48" HorizontalAlignment="Center" />
+            <TextBlock Text="No liked games yet." FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+            <TextBlock Text="Try inviting more friends or broadening your libraries to keep swiping!" Foreground="#ADB4C5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="320" />
         </StackPanel>
     </Grid>
 </UserControl>
-
