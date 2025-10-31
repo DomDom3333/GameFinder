@@ -1,7 +1,9 @@
-next-version: 1.0.0
-mode: Mainline
+mode: ContinuousDeployment
 branches:
   main:
     regex: ^main$
     tag: ''
-    increment: Minor
+    increment: Patch
+    is-main-branch: true
+ignore:
+  sha: []
