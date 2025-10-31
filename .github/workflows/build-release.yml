@@ -30,6 +30,9 @@ jobs:
           - os: windows-latest
             client-runtime: win-x64
             artifact-name: ArcadeMatch.Client-Windows-x64.zip
+          - os: windows-latest
+            client-runtime: win-arm64
+            artifact-name: ArcadeMatch.Client-Windows-ARM64.zip
           - os: ubuntu-latest
             client-runtime: linux-x64
             artifact-name: ArcadeMatch.Client-Linux-x64.zip
@@ -101,6 +104,7 @@ jobs:
       - name: Publish server
         run: |
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r win-x64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/win-x64
+          dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r win-arm64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/win-arm64
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-x64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/linux-x64
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm64 --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/linux-arm64
           dotnet publish ArcadeMatch.Server/ArcadeMatch.Server.csproj -c Release -r linux-arm --self-contained true -p:Version=$VERSION -o publish/ArcadeMatch.Server/linux-arm
@@ -111,6 +115,7 @@ jobs:
       - name: Create server zip files
         run: |
           cd publish/ArcadeMatch.Server/win-x64 && zip -r ../../../ArcadeMatch.Server-Windows-x64.zip * && cd ../../..
+          cd publish/ArcadeMatch.Server/win-arm64 && zip -r ../../../ArcadeMatch.Server-Windows-ARM64.zip * && cd ../../..
           cd publish/ArcadeMatch.Server/linux-x64 && zip -r ../../../ArcadeMatch.Server-Linux-x64.zip * && cd ../../..
           cd publish/ArcadeMatch.Server/linux-arm64 && zip -r ../../../ArcadeMatch.Server-Linux-ARM64.zip * && cd ../../..
           cd publish/ArcadeMatch.Server/linux-arm && zip -r ../../../ArcadeMatch.Server-Linux-ARM.zip * && cd ../../..
@@ -123,6 +128,7 @@ jobs:
           name: server-artifacts
           path: |
             ArcadeMatch.Server-Windows-x64.zip
+            ArcadeMatch.Server-Windows-ARM64.zip
             ArcadeMatch.Server-Linux-x64.zip
             ArcadeMatch.Server-Linux-ARM64.zip
             ArcadeMatch.Server-Linux-ARM.zip
@@ -183,6 +189,7 @@ jobs:
           name: Release v${{ needs.version.outputs.semVer }}
           files: |
             ArcadeMatch.Client-Windows-x64.zip
+            ArcadeMatch.Client-Windows-ARM64.zip
             ArcadeMatch.Client-Linux-x64.zip
             ArcadeMatch.Client-Linux-ARM64.zip
             ArcadeMatch.Client-Linux-ARM.zip
@@ -191,6 +198,7 @@ jobs:
             ArcadeMatch.Client-macOS-Intel.zip
             ArcadeMatch.Client-macOS-AppleSilicon.zip
             ArcadeMatch.Server-Windows-x64.zip
+            ArcadeMatch.Server-Windows-ARM64.zip
             ArcadeMatch.Server-Linux-x64.zip
             ArcadeMatch.Server-Linux-ARM64.zip
             ArcadeMatch.Server-Linux-ARM.zip
