@@ -21,7 +21,6 @@ public class ApiHandler
     public string? CurrentAdminUser { get; private set; }
 
     private static readonly HttpClient HttpClient = new();
-    private const string SteamMarketEndpoint = "http://127.0.0.1:5170/SteamMarketData/";
 
     public event Action<string>? SessionCreated;
     public event Action<string, bool>? UserJoinedSession;
@@ -35,7 +34,7 @@ public class ApiHandler
 
     public async Task Connect(string[] args)
     {
-        string hubUrl = "http://127.0.0.1:5170/matchinghub";
+        string hubUrl = App.Settings.Server.HubUrl;
         Connection = new HubConnectionBuilder().WithUrl(hubUrl).Build();
         RegisterEventHandlers(Connection);
         await Connection.StartAsync();
@@ -177,7 +176,7 @@ public class ApiHandler
 
             try
             {
-                var json = await HttpClient.GetStringAsync($"{SteamMarketEndpoint}{id}").ConfigureAwait(false);
+                var json = await HttpClient.GetStringAsync($"{App.Settings.Server.SteamMarketDataUrl}{id}").ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(json))
                     continue;
 

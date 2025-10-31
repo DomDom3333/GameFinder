@@ -9,6 +9,8 @@ namespace ArcadeMatch.Avalonia;
 public partial class App : Application
 {
     public static ApiHandler Api = new();
+    public static ApiSettings Settings { get; private set; } = new();
+    
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -18,6 +20,9 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Load configuration before connecting
+            Settings = ApiSettings.Load();
+            
             Task.Run(() => Api.Connect(Config.GameList.ToArray()));
             desktop.MainWindow = new MainWindow();
         }
