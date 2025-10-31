@@ -55,6 +55,9 @@ jobs:
   image:
     needs: version
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       VERSION: ${{ needs.version.outputs.semVer }}
     steps:
@@ -65,7 +68,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -77,7 +80,7 @@ jobs:
           context: .
           file: ArcadeMatch.Server/Dockerfile
           push: true
-          tags: ghcr.io/${{ env.REPOSITORY }}/server:v${{ env.VERSION }}
+          tags: ghcr.io/${{ env.REPOSITORY }}:v${{ env.VERSION }}
 
   release:
     needs: [build, image, version]
