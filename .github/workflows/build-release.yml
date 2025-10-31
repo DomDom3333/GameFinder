@@ -12,6 +12,8 @@ jobs:
       semVer: ${{ steps.gitversion.outputs.semVer }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v0.9.14
         with:
@@ -27,6 +29,8 @@ jobs:
       VERSION: ${{ needs.version.outputs.semVer }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
@@ -55,6 +59,8 @@ jobs:
       VERSION: ${{ needs.version.outputs.semVer }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
