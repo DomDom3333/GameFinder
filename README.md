@@ -1,16 +1,16 @@
 # ArcadeMatch
 
-This repository contains a WPF application and an ASP.NET Core API used to create game sessions and match common games between Steam users.
+This repository contains a cross-platform Avalonia application and an ASP.NET Core API used to create game sessions and match common games between Steam users.
 
 The project is split into three parts:
 
-- **ArcadeMatch.Client** – the WPF client.
+- **ArcadeMatch.Avalonia** – the cross-platform Avalonia client.
 - **ArcadeMatch.Server** – the backend API and SignalR hub.
 - **SteamCookieFetcher** – a console utility for obtaining Steam cookies.
 
 Both the client and server are included in `ArcadeMatch.sln`.
 
-The WPF client uses `Microsoft.NET.Sdk.WindowsDesktop`. Building the solution requires the .NET Desktop Runtime and SDK, which are available only on Windows.
+The Avalonia client is cross-platform and can be built on Windows, macOS, and Linux. A legacy WPF client (ArcadeMatch.Client) is also available but the Avalonia client is now the recommended option.
 
 The API persistently caches fetched game details and throttles Steam requests with a token bucket limiter to avoid rate limits. On a fresh start the server will still queue incoming requests so the store is never overwhelmed.
 
@@ -23,8 +23,8 @@ The API persistently caches fetched game details and throttles Steam requests wi
 6. Click **Fetch via API** to load your games without using cookies.
 
 ## Releases
-GitHub releases contain prebuilt binaries for the client, the server and the
-Steam cookie utility. Server executables are provided for Windows and Linux
-(x64, arm64 and arm) as self‑contained binaries so they run without a local
-.NET installation. A Docker image of the server is also published on GitHub
-Container Registry for container deployments.
+GitHub releases contain prebuilt binaries for the Avalonia client, the server and the
+Steam cookie utility. The Avalonia client is provided for Windows, macOS, and Linux.
+Server executables are provided for Windows and Linux (x64, arm64 and arm) as 
+self‑contained binaries so they run without a local .NET installation. A Docker image 
+of the server is also published on GitHub Container Registry for container deployments.
