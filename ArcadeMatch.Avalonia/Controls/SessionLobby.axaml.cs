@@ -56,9 +56,68 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
     private bool _isAdmin;
     private string _currentUser = string.Empty;
     private string _sessionId = string.Empty;
+    private int _lobbyUserCount = 1;
+    private bool _includeWishlist;
+    private int _minOwners = 0;
+    private int _minWishlisted = 0;
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler<string>? StartButtonClicked;
+
+    public int LobbyUserCount
+    {
+        get => _lobbyUserCount;
+        private set
+        {
+            if (_lobbyUserCount != value)
+            {
+                _lobbyUserCount = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LobbyUserCount)));
+            }
+        }
+    }
+
+    public int MinOwners
+    {
+        get => _minOwners;
+        set
+        {
+            if (_minOwners != value)
+            {
+                _minOwners = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MinOwners)));
+            }
+        }
+    }
+
+    public int MinWishlisted
+    {
+        get => _minWishlisted;
+        set
+        {
+            if (_minWishlisted != value)
+            {
+                _minWishlisted = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MinWishlisted)));
+            }
+        }
+    }
+
+    public bool IncludeWishlist
+    {
+        get => _includeWishlist;
+        set
+        {
+            if (_includeWishlist != value)
+            {
+                _includeWishlist = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IncludeWishlist)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsWishlistSliderEnabled)));
+            }
+        }
+    }
+
+    public bool IsWishlistSliderEnabled => _isAdmin && _includeWishlist;
 
     public string SessionId
     {
@@ -83,6 +142,7 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
             {
                 _isAdmin = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsAdmin)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsWishlistSliderEnabled)));
             }
         }
     }
@@ -137,7 +197,11 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
         var existing = _users.FirstOrDefault(u => u.Name == username);
         if (existing == null)
         {
-            Dispatcher.UIThread.Post(() => _users.Add(new UserEntry(username, admin, false)));
+            Dispatcher.UIThread.Post(() =>
+            {
+                _users.Add(new UserEntry(username, admin, false));
+                LobbyUserCount = _users.Count;
+            });
         }
         else
         {
@@ -150,7 +214,11 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
         var entry = _users.FirstOrDefault(u => u.Name == username);
         if (entry != null)
         {
-            Dispatcher.UIThread.Post(() => _users.Remove(entry));
+            Dispatcher.UIThread.Post(() =>
+            {
+                _users.Remove(entry);
+                LobbyUserCount = _users.Count;
+            });
         }
     }
 
@@ -165,7 +233,10 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
 
     async void StartButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        await App.Api.StartSession(App.Api.SessionId);
+        int minOwners = MinOwners;
+        int minWishlisted = MinWishlisted;
+
+        await App.Api.StartSession(App.Api.SessionId, IncludeWishlist, minOwners, minWishlisted);
         StartButtonClicked?.Invoke(this, "StartButton");
     }
 
@@ -228,6 +299,8 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
 
             if (!string.IsNullOrEmpty(_currentUser) && _users.All(u => u.Name != _currentUser))
                 _users.Insert(0, new UserEntry(_currentUser, currentIsAdmin, true));
+            
+            LobbyUserCount = _users.Count;
         });
 
         IsAdmin = currentIsAdmin;

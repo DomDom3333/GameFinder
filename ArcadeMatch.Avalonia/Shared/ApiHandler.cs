@@ -117,12 +117,12 @@ public class ApiHandler
         if (Connection != null) await Connection.InvokeAsync("CreateSession");
     }
 
-    public async Task JoinSessionAsync(string sessionCode, string username, List<string> gameList)
+    public async Task JoinSessionAsync(string sessionCode, string username, List<string> gameList, List<string> wishlist)
     {
         SessionId = sessionCode;
         _currentUser = username;
         if (Connection != null)
-            await Connection.InvokeAsync("JoinSession", sessionCode, username, gameList);
+            await Connection.InvokeAsync("JoinSession", sessionCode, username, gameList, wishlist);
     }
 
     public async Task LeaveSessionAsync(string username)
@@ -137,9 +137,9 @@ public class ApiHandler
         CurrentAdminUser = null;
     }
 
-    public async Task StartSession(string sessionCode)
+    public async Task StartSession(string sessionCode, bool includeWishlist, int minOwners, int minWishlisted)
     {
-        if (Connection != null) await Connection.InvokeAsync("StartSession", sessionCode);
+        if (Connection != null) await Connection.InvokeAsync("StartSession", sessionCode, includeWishlist, minOwners, minWishlisted);
     }
 
     public async Task Swipe(string sessionCode, string game, bool swipeRight)

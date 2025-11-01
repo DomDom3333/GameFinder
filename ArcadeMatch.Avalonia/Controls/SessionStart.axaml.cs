@@ -41,7 +41,7 @@ public partial class SessionStart : UserControl
         {
             await Task.Delay(200);
         }
-        await App.Api.JoinSessionAsync(App.Api.SessionId, Config.Username, Config.GameList);
+        await App.Api.JoinSessionAsync(App.Api.SessionId, Config.Username, Config.GameList, Config.WishlistGames);
         SessionButtonClicked?.Invoke(this, "StartNewSession");
     }
 
@@ -57,7 +57,7 @@ public partial class SessionStart : UserControl
             await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Please enter a valid Username");
             return;
         }
-        await App.Api.JoinSessionAsync(SessionCodeBox.Text, Config.Username, Config.GameList);
+        await App.Api.JoinSessionAsync(SessionCodeBox.Text, Config.Username, Config.GameList, Config.WishlistGames);
         SessionButtonClicked?.Invoke(this, "JoinSession");
     }
 }
