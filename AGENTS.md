@@ -20,7 +20,7 @@ dotnet restore ArcadeMatch.sln
 dotnet build --no-restore ArcadeMatch.sln
 ```
 
-The solution includes both an Avalonia client (cross-platform) and a legacy WPF client (Windows-only). The WPF project requires the .NET Desktop SDK and will only build on Windows. If building on a non-Windows environment, you may build the Avalonia client, API, and console projects individually:
+The solution includes the Avalonia client (cross-platform), the ASP.NET Core server, and the Steam cookie utility. If building on a non-Windows environment, you may build the Avalonia client, API, and console projects individually:
 
 ```bash
 dotnet build ArcadeMatch.Avalonia/ArcadeMatch.Avalonia.csproj
