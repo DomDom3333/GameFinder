@@ -13,6 +13,5 @@ ArcadeMatch is a cross-platform multiplayer game recommendation system. The proj
 - **ArcadeMatch.Avalonia** – The cross-platform Avalonia client used for joining sessions and swiping through games. Runs on Windows, macOS, and Linux.
 - **ArcadeMatch.Server** – The ASP.NET Core application hosting the SignalR hub and session logic.
 - **SteamCookieFetcher** – A helper tool for retrieving Steam cookies.
-- **ArcadeMatch.Client (Legacy)** – The original WPF client, now deprecated in favor of the Avalonia client.
 
 The Avalonia client is cross-platform and can be built on any platform that supports .NET 8.

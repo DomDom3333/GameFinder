@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using GameFinder.Objects;
 
 namespace GameFinder;
@@ -8,7 +11,7 @@ public static class GameDataCache
 {
     private static readonly string CacheFilePath = Path.Combine(AppContext.BaseDirectory, "gameCache.json");
     private static readonly SemaphoreSlim FileLock = new(1, 1);
-    private static readonly Dictionary<string, GameData> _cache = LoadCache();
+    private static readonly Dictionary<string, GameData> Cache = LoadCache();
 
     private static Dictionary<string, GameData> LoadCache()
     {
@@ -32,24 +35,24 @@ public static class GameDataCache
 
     public static bool TryGet(string id, out GameData? data)
     {
-        lock (_cache)
+        lock (Cache)
         {
-            return _cache.TryGetValue(id, out data);
+            return Cache.TryGetValue(id, out data);
         }
     }
 
     public static async Task SetAsync(string id, GameData data)
     {
-        lock (_cache)
+        lock (Cache)
         {
-            _cache[id] = data;
+            Cache[id] = data;
         }
 
         await FileLock.WaitAsync();
         try
         {
-            string json = JsonSerializer.Serialize(_cache);
-            await File.WriteAllTextAsync(CacheFilePath, json);
+            string json = JsonSerializer.Serialize(Cache);
+            await File.WriteAllTextAsync(CacheFilePath, json).ConfigureAwait(false);
         }
         catch
         {

@@ -27,16 +27,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\ArcadeMatch.Client\GameDataCache.cs" Link="GameDataCache.cs" />
-    <Compile Include="..\ArcadeMatch.Client\Objects\CookieData.cs" Link="Objects\CookieData.cs" />
-    <Compile Include="..\ArcadeMatch.Client\Objects\MatchedGame.cs" Link="Objects\MatchedGame.cs" />
-    <Compile Include="..\ArcadeMatch.Client\Objects\MatchedGameSummary.cs" Link="Objects\MatchedGameSummary.cs" />
-    <Compile Include="..\ArcadeMatch.Client\Objects\SteamResponse.cs" Link="Objects\SteamResponse.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ArcadeMatch.Core\ArcadeMatch.Core.csproj" />
   </ItemGroup>
 </Project>

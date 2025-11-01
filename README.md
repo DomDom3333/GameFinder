@@ -10,7 +10,7 @@ The project is split into three parts:
 
 Both the client and server are included in `ArcadeMatch.sln`.
 
-The Avalonia client is cross-platform and can be built on Windows, macOS, and Linux. A legacy WPF client (ArcadeMatch.Client) is also available but the Avalonia client is now the recommended option.
+The Avalonia client is cross-platform and can be built on Windows, macOS, and Linux.
 
 The API persistently caches fetched game details and throttles Steam requests with a token bucket limiter to avoid rate limits. On a fresh start the server will still queue incoming requests so the store is never overwhelmed.
 
