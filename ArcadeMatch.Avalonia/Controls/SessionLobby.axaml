@@ -1,28 +1,107 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ArcadeMatch.Avalonia.Controls"
-             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
-             x:Class="ArcadeMatch.Avalonia.Controls.SessionLobby"
-             x:CompileBindings="False">
+<UserControl
+    x:Class="ArcadeMatch.Avalonia.Controls.SessionLobby"
+    x:CompileBindings="False"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:local="clr-namespace:ArcadeMatch.Avalonia.Controls"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" Spacing="15">
-            <TextBlock Text="Session Lobby" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-            <Border Background="#0078D4" CornerRadius="10" Padding="15,10" Margin="0,0,0,10">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                    <TextBlock x:Name="SessionCodeText" FontSize="16" FontWeight="Bold" Foreground="White"/>
-                    <Button Content="📋 Copy" Click="CopyCode_OnClick"/>
+        <StackPanel
+            HorizontalAlignment="Center"
+            Spacing="15"
+            VerticalAlignment="Center"
+            Width="500">
+            <TextBlock
+                FontSize="20"
+                FontWeight="Bold"
+                HorizontalAlignment="Center"
+                Text="Session Lobby" />
+            <Border
+                Background="#0078D4"
+                CornerRadius="10"
+                Margin="0,0,0,10"
+                Padding="15,10">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="10">
+                    <TextBlock
+                        FontSize="16"
+                        FontWeight="Bold"
+                        Foreground="White"
+                        x:Name="SessionCodeText" />
+                    <Button Click="CopyCode_OnClick" Content="📋 Copy" />
                 </StackPanel>
             </Border>
-            <ListBox x:Name="UsersListBox" MinHeight="120" SelectionMode="Single">
+            <ListBox
+                MinHeight="120"
+                SelectionMode="Single"
+                x:Name="UsersListBox">
                 <ListBox.ItemTemplate>
-                    <DataTemplate x:DataType="{x:Null}" x:CompileBindings="False">
-                        <TextBlock Text="{Binding DisplayName}" Margin="5"/>
+                    <DataTemplate x:CompileBindings="False" x:DataType="{x:Null}">
+                        <TextBlock Margin="5" Text="{Binding DisplayName}" />
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                <Button Content="🚪 Leave" Click="LeaveButton_Click"/>
-                <Button Content="🚀 Start Game" Click="StartButton_OnClick" IsEnabled="{Binding IsAdmin}"/>
+            <!--  Matching options (admin-configurable)  -->
+            <Border
+                CornerRadius="6"
+                Margin="0,5,0,0"
+                Padding="10">
+                <StackPanel Spacing="8">
+                    <TextBlock FontWeight="Bold" Text="Matching Options" />
+                    <CheckBox
+                        Content="Include wishlisted games"
+                        IsChecked="{Binding IncludeWishlist}"
+                        IsEnabled="{Binding IsAdmin}"
+                        x:Name="IncludeWishlistCheckbox" />
+                    <StackPanel Orientation="Vertical" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Min owners:" VerticalAlignment="Center" />
+                            <Slider
+                                IsEnabled="{Binding IsAdmin}"
+                                IsSnapToTickEnabled="True"
+                                Maximum="{Binding LobbyUserCount}"
+                                Minimum="0"
+                                TickFrequency="1"
+                                Width="260"
+                                x:Name="MinOwnersSlider" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Text="{Binding Value, ElementName=MinOwnersSlider}"
+                                Width="30" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Min wishlisted:" VerticalAlignment="Center" />
+                            <Slider
+                                IsEnabled="{Binding IsWishlistSliderEnabled}"
+                                IsSnapToTickEnabled="True"
+                                Maximum="{Binding LobbyUserCount}"
+                                Minimum="0"
+                                TickFrequency="1"
+                                Width="260"
+                                x:Name="MinWishlistedSlider" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Text="{Binding Value, ElementName=MinWishlistedSlider}"
+                                Width="30" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock
+                        FontSize="11"
+                        Foreground="#666"
+                        Text="Set any threshold to 0 to ignore it. If both are 0, only common owned games are used." />
+                </StackPanel>
+            </Border>
+            <StackPanel
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="10">
+                <Button Click="LeaveButton_Click" Content="🚪 Leave" />
+                <Button
+                    Click="StartButton_OnClick"
+                    Content="🚀 Start Game"
+                    IsEnabled="{Binding IsAdmin}" />
             </StackPanel>
         </StackPanel>
     </Grid>

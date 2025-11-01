@@ -14,6 +14,8 @@ namespace GameFinder
 
         // To store user connections and their game lists
         private static readonly ConcurrentDictionary<string, HashSet<string>> UserGames = new();
+        // To store user wishlists
+        private static readonly ConcurrentDictionary<string, HashSet<string>> UserWishlists = new();
         
         // Stores the admin username for each session code
         private static readonly ConcurrentDictionary<string, string> Admins = new();
@@ -38,6 +40,7 @@ namespace GameFinder
                     if (session.Users.Remove(Context.ConnectionId))
                     {
                         UserGames.TryRemove(Context.ConnectionId, out _);
+                        UserWishlists.TryRemove(Context.ConnectionId, out _);
                         await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
 
                         foreach (var swipes in session.GameSwipes.Values)
@@ -105,7 +108,7 @@ namespace GameFinder
             Console.WriteLine($"Session created with code: {sessionCode}");
         }
 
-        public async Task JoinSession(string sessionCode, string username, List<string> gameList)
+        public async Task JoinSession(string sessionCode, string username, List<string> gameList, List<string> wishlist)
         {
             if (Sessions.TryGetValue(sessionCode, out Session? session))
             {
@@ -124,8 +127,9 @@ namespace GameFinder
                 ConnectionUserMapping[Context.ConnectionId] = username;
                 session.Users.Add(Context.ConnectionId);
 
-                // Store user's game list
-                UserGames[Context.ConnectionId] = new HashSet<string>(gameList);
+                // Store user's game list and wishlist
+                UserGames[Context.ConnectionId] = new HashSet<string>(gameList ?? new List<string>());
+                UserWishlists[Context.ConnectionId] = new HashSet<string>(wishlist ?? new List<string>());
 
                 Console.WriteLine($"User {username} joined session {sessionCode}");
 
@@ -154,6 +158,7 @@ namespace GameFinder
                 ConnectionUserMapping.TryRemove(Context.ConnectionId, out _);
                 if (UserGames.TryRemove(Context.ConnectionId, out _))
                 {
+                    UserWishlists.TryRemove(Context.ConnectionId, out _);
                     session.Users.Remove(Context.ConnectionId);
                     await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
 
@@ -214,7 +219,7 @@ namespace GameFinder
         }
 
         // 3. Validate game list intersection in StartSession
-        public async Task StartSession(string sessionCode)
+        public async Task StartSession(string sessionCode, bool includeWishlist, int minOwners, int minWishlisted)
         {
             if (!Sessions.TryGetValue(sessionCode, out Session? session))
             {
@@ -235,22 +240,66 @@ namespace GameFinder
                 return;
             }
 
-            // Ensure there is at least one user; if only one user exists, handle it accordingly.
             if (session.Users.Count < 1)
             {
                 await Clients.Client(Context.ConnectionId).SendAsync("Error", "Not enough participants to start the session.");
                 return;
             }
 
-            // Aggregate game lists from all users in the session with safety for single user scenarios.
-            HashSet<string> commonGames = session.Users
-                .Where(id => UserGames.ContainsKey(id))
-                .Select(id => UserGames[id])
-                .Aggregate((previousList, nextList) =>
-                    new HashSet<string>(previousList.Intersect(nextList).OrderBy(x => Guid.NewGuid())));
+            // Build counts
+            var ownerCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var wishCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var userId in session.Users)
+            {
+                if (UserGames.TryGetValue(userId, out var owned))
+                {
+                    foreach (var g in owned)
+                    {
+                        ownerCounts[g] = ownerCounts.TryGetValue(g, out var c) ? c + 1 : 1;
+                    }
+                }
+                if (includeWishlist && UserWishlists.TryGetValue(userId, out var wished))
+                {
+                    foreach (var g in wished)
+                    {
+                        wishCounts[g] = wishCounts.TryGetValue(g, out var c) ? c + 1 : 1;
+                    }
+                }
+            }
 
-            session.CommonGames = commonGames;
-            await Clients.Group(sessionCode).SendAsync("SessionStarted", commonGames);
+            // Union of all candidates (owners and optionally wishlists)
+            var candidates = new HashSet<string>(ownerCounts.Keys, StringComparer.Ordinal);
+            if (includeWishlist)
+            {
+                foreach (var g in wishCounts.Keys) candidates.Add(g);
+            }
+
+            bool ownersActive = minOwners > 0;
+            bool wishlistActive = includeWishlist && minWishlisted > 0;
+
+            IEnumerable<string> filtered = candidates.Where(g =>
+            {
+                bool ownersOk = ownersActive ? (ownerCounts.TryGetValue(g, out var oc) && oc >= minOwners) : false;
+                bool wishlistOk = wishlistActive ? (wishCounts.TryGetValue(g, out var wc) && wc >= minWishlisted) : false;
+
+                if (ownersActive && wishlistActive)
+                    return ownersOk || wishlistOk; // either condition is enough
+                if (ownersActive)
+                    return ownersOk; // only owners threshold applies
+                if (wishlistActive)
+                    return wishlistOk; // only wishlist threshold applies
+
+                // No thresholds active: default to intersection of owned games by all users
+                if (session.Users.All(id => UserGames.TryGetValue(id, out var set) && set.Contains(g)))
+                    return true;
+                return false;
+            });
+
+            // Randomize order for fairness
+            var randomized = filtered.OrderBy(_ => Guid.NewGuid()).ToHashSet(StringComparer.Ordinal);
+
+            session.CommonGames = randomized;
+            await Clients.Group(sessionCode).SendAsync("SessionStarted", randomized);
         }
 
         public async Task Swipe(string sessionCode, string game, bool swipeRight)
