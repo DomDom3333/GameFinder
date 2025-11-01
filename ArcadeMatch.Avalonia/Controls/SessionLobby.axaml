@@ -50,47 +50,53 @@
                 Padding="10">
                 <StackPanel Spacing="8">
                     <TextBlock FontWeight="Bold" Text="Matching Options" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock
+                            Text="Min owners:"
+                            VerticalAlignment="Center"
+                            Width="100" />
+                        <Slider
+                            IsEnabled="{Binding IsAdmin}"
+                            IsSnapToTickEnabled="True"
+                            Maximum="{Binding LobbyUserCount}"
+                            Minimum="0"
+                            TickFrequency="1"
+                            Value="{Binding MinOwners}"
+                            Width="260"
+                            x:Name="MinOwnersSlider" />
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            Text="{Binding Value, ElementName=MinOwnersSlider}"
+                            Width="30" />
+                    </StackPanel>
                     <CheckBox
                         Content="Include wishlisted games"
                         IsChecked="{Binding IncludeWishlist}"
                         IsEnabled="{Binding IsAdmin}"
                         x:Name="IncludeWishlistCheckbox" />
-                    <StackPanel Orientation="Vertical" Spacing="6">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Min owners:" VerticalAlignment="Center" />
-                            <Slider
-                                IsEnabled="{Binding IsAdmin}"
-                                IsSnapToTickEnabled="True"
-                                Maximum="{Binding LobbyUserCount}"
-                                Minimum="0"
-                                TickFrequency="1"
-                                Width="260"
-                                x:Name="MinOwnersSlider" />
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                Text="{Binding Value, ElementName=MinOwnersSlider}"
-                                Width="30" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Min wishlisted:" VerticalAlignment="Center" />
-                            <Slider
-                                IsEnabled="{Binding IsWishlistSliderEnabled}"
-                                IsSnapToTickEnabled="True"
-                                Maximum="{Binding LobbyUserCount}"
-                                Minimum="0"
-                                TickFrequency="1"
-                                Width="260"
-                                x:Name="MinWishlistedSlider" />
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                Text="{Binding Value, ElementName=MinWishlistedSlider}"
-                                Width="30" />
-                        </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock
+                            Text="Min wishlisted:"
+                            VerticalAlignment="Center"
+                            Width="100" />
+                        <Slider
+                            IsEnabled="{Binding IsWishlistSliderEnabled}"
+                            IsSnapToTickEnabled="True"
+                            Maximum="{Binding LobbyUserCount}"
+                            Minimum="0"
+                            TickFrequency="1"
+                            Value="{Binding MinWishlisted}"
+                            Width="260"
+                            x:Name="MinWishlistedSlider" />
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            Text="{Binding Value, ElementName=MinWishlistedSlider}"
+                            Width="30" />
                     </StackPanel>
                     <TextBlock
                         FontSize="11"
                         Foreground="#666"
-                        Text="Set any threshold to 0 to ignore it. If both are 0, only common owned games are used." />
+                        Text="Tip: Set any threshold to 0 to ignore it." />
                 </StackPanel>
             </Border>
             <StackPanel

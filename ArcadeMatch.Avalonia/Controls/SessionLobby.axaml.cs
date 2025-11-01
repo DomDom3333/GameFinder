@@ -58,6 +58,8 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
     private string _sessionId = string.Empty;
     private int _lobbyUserCount = 1;
     private bool _includeWishlist;
+    private int _minOwners = 0;
+    private int _minWishlisted = 0;
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler<string>? StartButtonClicked;
@@ -71,6 +73,32 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
             {
                 _lobbyUserCount = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LobbyUserCount)));
+            }
+        }
+    }
+
+    public int MinOwners
+    {
+        get => _minOwners;
+        set
+        {
+            if (_minOwners != value)
+            {
+                _minOwners = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MinOwners)));
+            }
+        }
+    }
+
+    public int MinWishlisted
+    {
+        get => _minWishlisted;
+        set
+        {
+            if (_minWishlisted != value)
+            {
+                _minWishlisted = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MinWishlisted)));
             }
         }
     }
@@ -205,8 +233,8 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
 
     async void StartButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        int minOwners = (int)(MinOwnersSlider?.Value ?? 0);
-        int minWishlisted = (int)(MinWishlistedSlider?.Value ?? 0);
+        int minOwners = MinOwners;
+        int minWishlisted = MinWishlisted;
 
         await App.Api.StartSession(App.Api.SessionId, IncludeWishlist, minOwners, minWishlisted);
         StartButtonClicked?.Invoke(this, "StartButton");

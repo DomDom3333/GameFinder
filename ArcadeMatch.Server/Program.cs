@@ -1,3 +1,5 @@
+using GameFinderApi;
+
 namespace GameFinder;
 
 public class Program
