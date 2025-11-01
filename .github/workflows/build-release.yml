@@ -165,7 +165,9 @@ jobs:
           context: .
           file: ArcadeMatch.Server/Dockerfile
           push: true
-          tags: ghcr.io/${{ env.REPOSITORY }}:v${{ env.VERSION }}
+          tags: |
+            ghcr.io/${{ env.REPOSITORY }}:v${{ env.VERSION }}
+            ghcr.io/${{ env.REPOSITORY }}:latest
 
   release:
     needs: [build, build-server, image, version]
