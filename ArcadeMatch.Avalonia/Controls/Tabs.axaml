@@ -1,30 +1,92 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ArcadeMatch.Avalonia.Controls.Tabs">
-    <TabControl>
+    <TabControl x:Name="MainTabs">
         <TabItem Header="Home">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="20">
-                    <TextBlock Text="Steam Authentication" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="1️⃣ Click the login button below"/>
-                        <TextBlock Text="2️⃣ Complete Steam authentication in browser"/>
-                        <TextBlock Text="3️⃣ Click refresh to verify login status"/>
-                        <TextBlock Text="4️⃣ Keep browser open until verification is complete"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="🔐 Authentication Status" Margin="0,0,0,10"/>
-                        <Border x:Name="StatusBorder" CornerRadius="15" Padding="15,8" Margin="0,0,15,0" Background="#FF4444">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Fill="White" Width="12" Height="12" Margin="0,0,8,0"/>
+                <StackPanel Margin="20" Spacing="16">
+                    <Border x:Name="CredentialReminderBanner"
+                            Background="#FFF8E1"
+                            BorderBrush="#FFB74D"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="12"
+                            IsVisible="False">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <TextBlock Text="Save your Steam API key and ID to unlock quick matchmaking." TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <Button Content="Enter Now"
+                                    Click="FocusApiInputsButton_OnClick"
+                                    MinWidth="110"
+                                    ToolTip.Tip="Jump to the Steam API credentials inputs."/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#EFF5FF" BorderBrush="#90CAF9" BorderThickness="1" CornerRadius="10" Padding="20">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <TextBlock Text="🚀" FontSize="20"/>
+                                <TextBlock Text="Connect with the Steam Web API (Recommended)" FontSize="20" FontWeight="Bold" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <TextBlock Text="Use your Steam API key for the most reliable and fastest way to sync your library." TextWrapping="Wrap"/>
+                            <StackPanel>
+                                <TextBlock Text="🔑 Steam API Key"/>
+                                <TextBox x:Name="ApiKeyBox"
+                                         Margin="0,4,0,12"
+                                         ToolTip.Tip="Create a Steam Web API key from https://steamcommunity.com/dev/apikey and paste it here."/>
+                                <TextBlock Text="🆔 Steam ID"/>
+                                <TextBox x:Name="SteamIdBox"
+                                         Margin="0,4,0,16"
+                                         ToolTip.Tip="Paste your 17-digit Steam ID (SteamID64)."/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Why you'll love this path:" FontWeight="SemiBold"/>
+                                <StackPanel Margin="10,4,0,0" Spacing="4">
+                                    <TextBlock Text="• Instant access to owned and wishlisted games." TextWrapping="Wrap"/>
+                                    <TextBlock Text="• No browser windows or cookie syncing required." TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Stays up to date whenever you refresh." TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="10">
+                                <Button Content="Save &amp; Fetch Library" Click="ApiFetchButton_OnClick" MinWidth="160"/>
+                                <Button Content="Why is this recommended?" Click="ApiGuidanceButton_OnClick"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel>
+                        <TextBlock Text="Connection Status" FontSize="18" FontWeight="Bold"/>
+                        <Border x:Name="StatusBorder" CornerRadius="12" Padding="15,8" Margin="0,8,0,0" Background="#FF4444">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Ellipse Fill="White" Width="12" Height="12"/>
                                 <TextBlock x:Name="StatusTextBlock" FontWeight="Bold" Foreground="White" Text="Not Connected"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                        <Button Content="🔑 Login to Steam" Click="LoginButton_OnClick"/>
-                        <Button Content="🔄 Refresh Status" Click="RefreshButton_OnClick"/>
-                    </StackPanel>
+
+                    <Border Background="#F8F9FB" BorderBrush="#CFD8DC" BorderThickness="1" CornerRadius="10" Padding="20">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🕶️" FontSize="18"/>
+                                <TextBlock Text="Alternate: Browser Cookie Flow" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <TextBlock Text="Use this option only if the Steam Web API is unavailable for your account." TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button Content="When should I use this?" Click="CookieGuidanceButton_OnClick"/>
+                                <Button Content="Enter API Credentials" Click="FocusApiInputsButton_OnClick" ToolTip.Tip="Return to the recommended API inputs."/>
+                            </StackPanel>
+                            <TextBlock Text="Steps:" FontWeight="SemiBold"/>
+                            <StackPanel Margin="10,4,0,0" Spacing="4">
+                                <TextBlock Text="1️⃣ Launch the Steam login window."/>
+                                <TextBlock Text="2️⃣ Complete authentication in your browser."/>
+                                <TextBlock Text="3️⃣ Refresh to capture cookies and load games."/>
+                                <TextBlock Text="⚠️ Keep the browser open until verification finishes."/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                                <Button Content="Login via Browser" Click="LoginButton_OnClick"/>
+                                <Button Content="Refresh from Cookies" Click="RefreshButton_OnClick"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </TabItem>
@@ -33,13 +95,10 @@
         </TabItem>
         <TabItem Header="Settings">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="20">
-                    <TextBlock Text="Configuration" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                    <TextBlock Text="🔐 Steam API Key"/>
-                    <TextBox x:Name="ApiKeyBox" Margin="0,0,0,20"/>
-                    <TextBlock Text="🆔 Steam ID"/>
-                    <TextBox x:Name="SteamIdBox" Margin="0,0,0,20"/>
-                    <Button Content="🔄 Fetch via API" HorizontalAlignment="Center" Click="ApiFetchButton_OnClick"/>
+                <StackPanel Margin="20" Spacing="12">
+                    <TextBlock Text="Settings" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="API credentials now live on the Home tab so they're front and center." TextWrapping="Wrap"/>
+                    <TextBlock Text="Additional configuration options will appear here as they are added." TextWrapping="Wrap"/>
                 </StackPanel>
             </ScrollViewer>
         </TabItem>

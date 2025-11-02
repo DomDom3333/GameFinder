@@ -39,6 +39,9 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         _steamGameService = new SteamGameService();
         InitializeComponent();
         DataContext = this;
+        ApiKeyBox.Text = Config.SteamApiKey;
+        SteamIdBox.Text = Config.SteamId;
+        UpdateCredentialReminder();
         ShowSessionStart();
         App.Api.SessionEnded += OnSessionEnded;
     }
@@ -48,6 +51,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         base.EndInit();
         IsLoggedIn = await TryGetGameListAsync();
         UpdateStatus();
+        UpdateCredentialReminder();
     }
 
     void LoginButton_OnClick(object? sender, RoutedEventArgs e)
@@ -71,23 +75,63 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
                 await DialogHelper.ShowMessageAsync(window, "Error", "Please enter both API key and Steam ID.");
             return;
         }
-        
+
+        ApiKeyBox.Text = Config.SteamApiKey;
+        SteamIdBox.Text = Config.SteamId;
+        UpdateCredentialReminder();
+
         var games = await _steamGameService.GetOwnedGamesViaApiAsync(Config.SteamApiKey, Config.SteamId);
         if (games != null)
         {
             Config.GameList = games;
             IsLoggedIn = games.Count > 0;
+            var window = this.GetVisualRoot() as Window;
+            if (window != null)
+            {
+                var message = games.Count > 0
+                    ? "Your Steam library was refreshed via the Web API. You can revisit this button any time to sync again."
+                    : "Your credentials were saved, but we couldn't find any games for this account yet.";
+                await DialogHelper.ShowMessageAsync(window, "Steam API", message);
+            }
         }
         else
         {
             IsLoggedIn = false;
+            var window = this.GetVisualRoot() as Window;
+            if (window != null)
+                await DialogHelper.ShowMessageAsync(window, "Steam API", "We couldn't reach the Steam Web API. Double-check your credentials or try again later.");
+        }
+    }
+
+    void FocusApiInputsButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        FocusApiInputs();
+    }
+
+    async void ApiGuidanceButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var window = this.GetVisualRoot() as Window;
+        if (window != null)
+        {
+            const string message = "The Steam Web API keeps your owned and wishlisted games in sync without relying on browser cookies. Once saved, you can refresh your library with a single click and avoid repeated logins.";
+            await DialogHelper.ShowMessageAsync(window, "Why use the API?", message);
+        }
+    }
+
+    async void CookieGuidanceButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var window = this.GetVisualRoot() as Window;
+        if (window != null)
+        {
+            const string message = "Use the browser cookie flow only when the Steam Web API is unavailable for your region or account. It requires staying logged in through Steam's web portal and refreshing cookies whenever they expire.";
+            await DialogHelper.ShowMessageAsync(window, "When to use cookies", message);
         }
     }
 
     async void RefreshButton_OnClick(object? sender, RoutedEventArgs e)
     {
         var result = await _steamGameService.GetOwnedAndWishlistGamesAsync();
-        
+
         if (result == null)
         {
             var window = this.GetVisualRoot() as Window;
@@ -186,6 +230,33 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
                 StatusBorder.Background = new SolidColorBrush(Color.Parse("#FF4444"));
                 StatusTextBlock.Text = "Not Connected";
             }
+        }
+    }
+
+    void FocusApiInputs()
+    {
+        if (MainTabs != null)
+            MainTabs.SelectedIndex = 0;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (ApiKeyBox != null && string.IsNullOrWhiteSpace(ApiKeyBox.Text))
+            {
+                ApiKeyBox.Focus();
+            }
+            else
+            {
+                SteamIdBox?.Focus();
+            }
+        });
+    }
+
+    void UpdateCredentialReminder()
+    {
+        if (CredentialReminderBanner != null)
+        {
+            var hasCredentials = !string.IsNullOrWhiteSpace(Config.SteamApiKey) && !string.IsNullOrWhiteSpace(Config.SteamId);
+            CredentialReminderBanner.IsVisible = !hasCredentials;
         }
     }
 }
