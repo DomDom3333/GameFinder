@@ -10,6 +10,7 @@ using ArcadeMatch.Avalonia.Helpers;
 using ArcadeMatch.Avalonia.Shared;
 using GameFinder.Objects;
 using Avalonia.VisualTree;
+using OpenQA.Selenium;
 
 namespace ArcadeMatch.Avalonia.Controls;
 
@@ -19,17 +20,16 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
 
     private readonly SteamGameService _steamGameService;
 
-    private bool _isLoggedIn;
     public bool IsLoggedIn
     {
-        get => _isLoggedIn;
+        get;
         set
         {
-            if (_isLoggedIn != value)
+            if (field != value)
             {
-                _isLoggedIn = value;
+                field = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoggedIn)));
-                UpdateStatus();
+                UpdateStatus(SteamGameService.LoadCookies());
             }
         }
     }
@@ -43,21 +43,35 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         App.Api.SessionEnded += OnSessionEnded;
     }
 
-    public async override void EndInit()
+    public override async void EndInit()
     {
         base.EndInit();
+        if (_steamGameService.HasSavedCookies())
+        {
+            await UpdateStatus(SteamGameService.LoadCookies() ?? throw new InvalidOperationException());
+        }
         IsLoggedIn = await TryGetGameListAsync();
-        UpdateStatus();
     }
 
-    void LoginButton_OnClick(object? sender, RoutedEventArgs e)
+    async void LoginButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        ShowLogin();
+        try
+        {
+            await ShowLogin();
+        }
+        catch (Exception )
+        {
+            // Dont know
+        }
     }
 
-    void ShowLogin()
+    private async Task ShowLogin()
     {
-        _steamGameService.PromptUserToLogin();
+        IReadOnlyCollection<Cookie> cookies = _steamGameService.PromptUserToLogin();
+        if (cookies != null &&  cookies.Any())
+        {
+            await UpdateStatus(cookies);
+        }
     }
 
     async void ApiFetchButton_OnClick(object? sender, RoutedEventArgs e)
@@ -139,40 +153,40 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         }
     }
 
-    internal void ShowSessionStart()
+    private void ShowSessionStart()
     {
         var control = new SessionStart();
         control.SessionButtonClicked += OnSessionButtonClicked;
         SessionContentControl.Content = control;
     }
 
-    internal void ShowSessionLobby()
+    private void ShowSessionLobby()
     {
         var control = new SessionLobby();
         control.StartButtonClicked += OnSessionButtonClicked;
         SessionContentControl.Content = control;
     }
 
-    internal void ShowSwiping()
+    private void ShowSwiping()
     {
         var swiping = new Swiping();
         swiping.LeaveClicked += () => ShowSessionStart();
         SessionContentControl.Content = swiping;
     }
 
-    internal void ShowResults(IReadOnlyList<MatchedGame> games)
+    private void ShowResults(IReadOnlyList<MatchedGame> games)
     {
         var result = new MatchResult(games);
         result.BackClicked += () => ShowSessionStart();
         SessionContentControl.Content = result;
     }
 
-    void OnSessionEnded(IReadOnlyList<MatchedGame> games)
+    private void OnSessionEnded(IReadOnlyList<MatchedGame> games)
     {
         Dispatcher.UIThread.Post(() => ShowResults(games));
     }
 
-    void UpdateStatus()
+    private async Task UpdateStatus(IReadOnlyCollection<Cookie> cookies)
     {
         if (StatusBorder != null && StatusTextBlock != null)
         {
@@ -187,6 +201,9 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
                 StatusTextBlock.Text = "Not Connected";
             }
         }
+        SteamGameService.ParseCookiesForData(cookies);
+        Config.UserProfile = Config.SteamId != null ? await SteamProfileFetcher.GetProfileAsync(Config.SteamId) : null;
+        Config.Username = Config.UserProfile?.SteamId ?? string.Empty;
     }
 }
 

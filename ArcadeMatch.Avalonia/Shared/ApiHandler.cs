@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
 using GameFinder;
 using GameFinder.Objects;
+using Microsoft.AspNetCore.SignalR.Client;
 
-namespace ArcadeMatch.Avalonia;
+namespace ArcadeMatch.Avalonia.Shared;
 
 public class ApiHandler
 {

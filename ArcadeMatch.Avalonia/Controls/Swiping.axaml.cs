@@ -13,6 +13,7 @@ using Avalonia.Threading;
 using ArcadeMatch.Avalonia.Helpers;
 using GameFinder.Objects;
 using ArcadeMatch.Avalonia;
+using ArcadeMatch.Avalonia.Shared;
 using GameFinder;
 using Avalonia.VisualTree;
 

@@ -3,6 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using ArcadeMatch.Avalonia.Helpers;
 using ArcadeMatch.Avalonia;
+using ArcadeMatch.Avalonia.Shared;
+using Avalonia;
 using Avalonia.VisualTree;
 
 namespace ArcadeMatch.Avalonia.Controls;
@@ -14,6 +16,18 @@ public partial class SessionStart : UserControl
     public SessionStart()
     {
         InitializeComponent();
+        if (Config.UserProfile != null)
+        {
+            DisplaynameBox.Text = Config.UserProfile.SteamId;
+        }
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (Config.UserProfile != null)
+        {
+            DisplaynameBox.Text = Config.UserProfile.SteamId;
+        }
     }
 
     void DisplaynameBox_LostFocus(object? sender, RoutedEventArgs e)

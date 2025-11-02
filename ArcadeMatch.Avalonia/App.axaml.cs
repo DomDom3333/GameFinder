@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using System.Threading.Tasks;
+using ArcadeMatch.Avalonia.Shared;
 using GameFinder;
 
 namespace ArcadeMatch.Avalonia;

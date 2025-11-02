@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -81,13 +82,13 @@ public class SteamGameService
             if (!File.Exists(_cookiesFilePath))
                 return null;
 
-            var cookies = LoadCookies(_cookiesFilePath);
+            IReadOnlyCollection<Cookie>? cookies = LoadCookies(_cookiesFilePath);
             if (cookies == null)
                 return null;
 
             string jsonResponse = await FetchJsonResponseWithCookiesAsync(cookies);
-            var ownedGames = ParseOwnedPackages(jsonResponse);
-            var wishlistGames = ParseWishlistPackages(jsonResponse);
+            List<string> ownedGames = ParseOwnedPackages(jsonResponse);
+            List<string> wishlistGames = ParseWishlistPackages(jsonResponse);
             
             return (ownedGames, wishlistGames);
         }
@@ -111,7 +112,7 @@ public class SteamGameService
             WebDriverWait wait = new(driver, TimeSpan.FromMinutes(2));
             wait.Until(drv => drv.Url != SteamLoginUrl);
             
-            var cookies = driver.Manage().Cookies.AllCookies;
+            ReadOnlyCollection<Cookie>? cookies = driver.Manage().Cookies.AllCookies;
             SaveCookies(_cookiesFilePath, cookies);
             return cookies;
         }
@@ -119,6 +120,13 @@ public class SteamGameService
         {
             driver.Quit();
         }
+    }
+
+    internal static void ParseCookiesForData(IReadOnlyCollection<Cookie> cookies)
+    {
+        Cookie? loginToken = cookies.FirstOrDefault(x => x.Name == "steamLoginSecure");
+        string steamId = loginToken?.Value.Split('%').FirstOrDefault() ?? string.Empty;
+        Config.SteamId = steamId;
     }
 
     /// <summary>
@@ -129,7 +137,7 @@ public class SteamGameService
     public void SaveCookies(string path, IReadOnlyCollection<Cookie> cookies)
     {
         List<CookieData> data = new();
-        foreach (var c in cookies)
+        foreach (Cookie c in cookies)
             data.Add(new CookieData(c));
 
         string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
@@ -141,7 +149,7 @@ public class SteamGameService
     /// </summary>
     /// <param name="path">File path to load cookies from.</param>
     /// <returns>Collection of cookies if successful, null otherwise.</returns>
-    public IReadOnlyCollection<Cookie>? LoadCookies(string path)
+    public static IReadOnlyCollection<Cookie>? LoadCookies(string path = DefaultCookiesFilePath)
     {
         if (!File.Exists(path))
             return null;

@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia;
 using ArcadeMatch.Avalonia;
+using ArcadeMatch.Avalonia.Shared;
 
 namespace ArcadeMatch.Avalonia.Controls;
 

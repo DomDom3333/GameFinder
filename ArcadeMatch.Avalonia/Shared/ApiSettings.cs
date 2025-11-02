@@ -1,7 +1,6 @@
-﻿using System.IO;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
-namespace ArcadeMatch.Avalonia;
+namespace ArcadeMatch.Avalonia.Shared;
 
 public class ApiSettings
 {
