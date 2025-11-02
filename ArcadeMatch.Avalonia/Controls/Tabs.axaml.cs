@@ -29,7 +29,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
             {
                 field = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoggedIn)));
-                UpdateStatus(SteamGameService.LoadCookies());
+                UpdateConnectionStatusUi();
             }
         }
     }
@@ -186,7 +186,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         Dispatcher.UIThread.Post(() => ShowResults(games));
     }
 
-    private async Task UpdateStatus(IReadOnlyCollection<Cookie> cookies)
+    private void UpdateConnectionStatusUi()
     {
         if (StatusBorder != null && StatusTextBlock != null)
         {
@@ -201,6 +201,10 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
                 StatusTextBlock.Text = "Not Connected";
             }
         }
+    }
+
+    private async Task UpdateStatus(IReadOnlyCollection<Cookie> cookies)
+    {
         SteamGameService.ParseCookiesForData(cookies);
         Config.UserProfile = Config.SteamId != null ? await SteamProfileFetcher.GetProfileAsync(Config.SteamId) : null;
         Config.Username = Config.UserProfile?.SteamId ?? string.Empty;
