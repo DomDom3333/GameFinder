@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using ArcadeMatch.Avalonia;
-using ArcadeMatch.Avalonia.Services;
+using ArcadeMatch.Avalonia.ViewModels.Tabs;
 
 namespace ArcadeMatch.Avalonia.Controls;
 
@@ -12,75 +12,75 @@ public partial class SessionStart : UserControl
 {
     public event EventHandler<string>? SessionButtonClicked;
 
+    private readonly SessionStartViewModel _viewModel;
+
     public SessionStart()
     {
         InitializeComponent();
-        if (App.UserConfig.UserProfile != null)
-        {
-            DisplaynameBox.Text = App.UserConfig.UserProfile.SteamId;
-        }
+        _viewModel = new SessionStartViewModel(App.Api, App.UserConfig);
+        DataContext = _viewModel;
+        DisplaynameBox.Text = string.IsNullOrWhiteSpace(_viewModel.DisplayName) ? "Your Display-name" : _viewModel.DisplayName;
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        if (App.UserConfig.UserProfile != null)
-        {
-            DisplaynameBox.Text = App.UserConfig.UserProfile.SteamId;
-        }
+        base.OnAttachedToVisualTree(e);
+        DisplaynameBox.Text = string.IsNullOrWhiteSpace(_viewModel.DisplayName) ? "Your Display-name" : _viewModel.DisplayName;
     }
 
     void DisplaynameBox_LostFocus(object? sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(DisplaynameBox.Text))
+        var text = DisplaynameBox.Text ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(text))
         {
             DisplaynameBox.Text = "Your Display-name";
-            App.UserConfig.Username = string.Empty;
+            _viewModel.DisplayName = string.Empty;
         }
         else
         {
-            App.UserConfig.Username = DisplaynameBox.Text;
+            _viewModel.DisplayName = text;
         }
     }
 
     async void StartNewSession_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(App.UserConfig.Username))
+        _viewModel.DisplayName = (DisplaynameBox.Text == "Your Display-name" ? string.Empty : DisplaynameBox.Text) ?? string.Empty;
+        var result = await _viewModel.StartNewSessionAsync();
+        if (!result.Success)
         {
-            if (this.GetVisualRoot() is Window owner)
-            {
-                await App.DialogService.ShowMessageAsync(owner, "Error", "Please enter a valid Username");
-            }
+            await ShowMessageAsync(result.ErrorMessage ?? "An unknown error occurred.");
             return;
         }
-        await App.Api.CreateSessionAsync();
-        while (string.IsNullOrWhiteSpace(App.Api.SessionId))
+
+        if (result.Action != null)
         {
-            await Task.Delay(200);
+            SessionButtonClicked?.Invoke(this, result.Action);
         }
-        await App.Api.JoinSessionAsync(App.Api.SessionId, App.UserConfig.Username, App.UserConfig.GameList, App.UserConfig.WishlistGames);
-        SessionButtonClicked?.Invoke(this, "StartNewSession");
     }
 
     async void JoinSession_OnClick(object? sender, RoutedEventArgs e)
     {
-        string? sessionCode = SessionCodeBox.Text;
-        if (string.IsNullOrWhiteSpace(sessionCode) || sessionCode.Length != 4)
+        _viewModel.SessionCode = SessionCodeBox.Text ?? string.Empty;
+        _viewModel.DisplayName = (DisplaynameBox.Text == "Your Display-name" ? string.Empty : DisplaynameBox.Text) ?? string.Empty;
+
+        var result = await _viewModel.JoinSessionAsync();
+        if (!result.Success)
         {
-            if (this.GetVisualRoot() is Window owner)
-            {
-                await App.DialogService.ShowMessageAsync(owner, "Error", "Please enter a valid Session Code");
-            }
+            await ShowMessageAsync(result.ErrorMessage ?? "An unknown error occurred.");
             return;
         }
-        if (string.IsNullOrWhiteSpace(App.UserConfig.Username))
+
+        if (result.Action != null)
         {
-            if (this.GetVisualRoot() is Window owner)
-            {
-                await App.DialogService.ShowMessageAsync(owner, "Error", "Please enter a valid Username");
-            }
-            return;
+            SessionButtonClicked?.Invoke(this, result.Action);
         }
-        await App.Api.JoinSessionAsync(sessionCode, App.UserConfig.Username, App.UserConfig.GameList, App.UserConfig.WishlistGames);
-        SessionButtonClicked?.Invoke(this, "JoinSession");
+    }
+
+    private async Task ShowMessageAsync(string message)
+    {
+        if (this.GetVisualRoot() is Window owner)
+        {
+            await App.DialogService.ShowMessageAsync(owner, "Error", message);
+        }
     }
 }
