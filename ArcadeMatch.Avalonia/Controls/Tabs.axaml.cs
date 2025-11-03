@@ -1,11 +1,10 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using GameFinder.Objects;
 using ArcadeMatch.Avalonia.ViewModels.Tabs;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ArcadeMatch.Avalonia.Controls;
 
@@ -26,7 +25,7 @@ public partial class Tabs : UserControl
     public override async void EndInit()
     {
         base.EndInit();
-        await _viewModel.InitializeAsync();
+        await _viewModel.Home.InitializeAsync();
     }
 
     private void OnHomeMessageRequested(object? sender, MessageRequestedEventArgs e)
@@ -84,35 +83,9 @@ public partial class Tabs : UserControl
         Dispatcher.UIThread.Post(() => ShowResults(games));
     }
 
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        if (!Dispatcher.UIThread.CheckAccess())
-        {
-            Dispatcher.UIThread.Post(UpdateConnectionStatusUi);
-            return;
-        }
-
-        if (StatusBorder != null && StatusTextBlock != null)
-        {
-            if (_viewModel.IsLoggedIn)
-            {
-                StatusBorder.Background = new SolidColorBrush(Color.Parse("#44AA44"));
-                StatusTextBlock.Text = _viewModel.SteamStatusText;
-            }
-            else
-            {
-                StatusBorder.Background = new SolidColorBrush(Color.Parse("#FF4444"));
-                StatusTextBlock.Text = _viewModel.SteamStatusText;
-            }
-        }
-    }
-
     private async Task ShowMessageAsync(string title, string message)
     {
-        var window = this.GetVisualRoot() as Window;
-        if (window != null)
-        {
+        if (this.GetVisualRoot() is Window window)
             await App.DialogService.ShowMessageAsync(window, title, message);
-        }
     }
 }

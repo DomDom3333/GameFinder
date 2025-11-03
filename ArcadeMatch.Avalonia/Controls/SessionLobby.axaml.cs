@@ -62,7 +62,7 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
     private int _minOwners = 0;
     private int _minWishlisted = 0;
 
-    public event PropertyChangedEventHandler? PropertyChanged;
+    public new event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler<string>? StartButtonClicked;
 
     public int LobbyUserCount
