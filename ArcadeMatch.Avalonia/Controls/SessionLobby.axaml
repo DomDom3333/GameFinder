@@ -1,9 +1,8 @@
 <UserControl
     x:Class="ArcadeMatch.Avalonia.Controls.SessionLobby"
-    x:CompileBindings="False"
+    x:DataType="sessionVm:SessionLobbyViewModel"
     xmlns="https://github.com/avaloniaui"
-    xmlns:local="clr-namespace:ArcadeMatch.Avalonia.Controls"
-    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+    xmlns:sessionVm="clr-namespace:ArcadeMatch.Avalonia.ViewModels.Sessions"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
         <StackPanel
@@ -29,16 +28,16 @@
                         FontSize="16"
                         FontWeight="Bold"
                         Foreground="White"
-                        x:Name="SessionCodeText" />
-                    <Button Click="CopyCode_OnClick" Content="📋 Copy" />
+                        Text="{Binding SessionId, StringFormat=Session Code: {0}}" />
+                    <Button Command="{Binding CopyCodeCommand}" Content="📋 Copy" />
                 </StackPanel>
             </Border>
             <ListBox
+                ItemsSource="{Binding Users}"
                 MinHeight="120"
-                SelectionMode="Single"
-                x:Name="UsersListBox">
+                SelectionMode="Single">
                 <ListBox.ItemTemplate>
-                    <DataTemplate x:CompileBindings="False" x:DataType="{x:Null}">
+                    <DataTemplate x:DataType="sessionVm:SessionLobbyViewModel+UserEntryViewModel">
                         <TextBlock Margin="5" Text="{Binding DisplayName}" />
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -103,9 +102,9 @@
                 HorizontalAlignment="Center"
                 Orientation="Horizontal"
                 Spacing="10">
-                <Button Click="LeaveButton_Click" Content="🚪 Leave" />
+                <Button Command="{Binding LeaveCommand}" Content="🚪 Leave" />
                 <Button
-                    Click="StartButton_OnClick"
+                    Command="{Binding StartCommand}"
                     Content="🚀 Start Game"
                     IsEnabled="{Binding IsAdmin}" />
             </StackPanel>

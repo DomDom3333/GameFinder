@@ -2,12 +2,28 @@
     x:Class="ArcadeMatch.Avalonia.Controls.Tabs"
     x:DataType="vm:TabsViewModel"
     xmlns="https://github.com/avaloniaui"
+    xmlns:controls="clr-namespace:ArcadeMatch.Avalonia.Controls"
     xmlns:converters="clr-namespace:ArcadeMatch.Avalonia.Converters"
+    xmlns:sessionVm="clr-namespace:ArcadeMatch.Avalonia.ViewModels.Sessions"
     xmlns:vm="clr-namespace:ArcadeMatch.Avalonia.ViewModels.Tabs"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
         <converters:IsLoggedInToBrushConverter x:Key="IsLoggedInToBrushConverter" />
     </UserControl.Resources>
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="{x:Type sessionVm:SessionStartViewModel}">
+            <controls:SessionStart />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type sessionVm:SessionLobbyViewModel}">
+            <controls:SessionLobby />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type sessionVm:SwipingViewModel}">
+            <controls:Swiping />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type sessionVm:MatchResultViewModel}">
+            <controls:MatchResult />
+        </DataTemplate>
+    </UserControl.DataTemplates>
     <TabControl>
         <TabItem Header="Home">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -55,7 +71,7 @@
             </ScrollViewer>
         </TabItem>
         <TabItem Header="Session">
-            <ContentControl x:Name="SessionContentControl" />
+            <ContentControl Content="{Binding SelectedSession}" />
         </TabItem>
         <TabItem Header="Settings">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
