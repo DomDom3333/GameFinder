@@ -109,14 +109,14 @@ public partial class Tabs : UserControl
     private void ShowSwiping()
     {
         var swiping = new Swiping();
-        swiping.LeaveClicked += () => ShowSessionStart();
+        swiping.LeaveClicked += ShowSessionStart;
         SessionContentControl.Content = swiping;
     }
 
     private void ShowResults(IReadOnlyList<MatchedGame> games)
     {
         var result = new MatchResult(games);
-        result.BackClicked += () => ShowSessionStart();
+        result.BackClicked += ShowSessionStart;
         SessionContentControl.Content = result;
     }
 
@@ -127,6 +127,12 @@ public partial class Tabs : UserControl
 
     private void UpdateConnectionStatusUi()
     {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(UpdateConnectionStatusUi);
+            return;
+        }
+
         if (StatusBorder != null && StatusTextBlock != null)
         {
             if (_viewModel.IsLoggedIn)

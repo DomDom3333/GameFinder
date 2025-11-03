@@ -104,7 +104,7 @@ public class TabsViewModel : INotifyPropertyChanged
             var cookies = _steamGameService.LoadCookies();
             if (cookies != null)
             {
-                await UpdateStatusAsync(cookies).ConfigureAwait(false);
+                await UpdateStatusAsync(cookies);
             }
         }
 
@@ -118,7 +118,7 @@ public class TabsViewModel : INotifyPropertyChanged
             IReadOnlyCollection<Cookie>? cookies = _steamGameService.PromptUserToLogin();
             if (cookies != null && cookies.Any())
             {
-                await UpdateStatusAsync(cookies).ConfigureAwait(false);
+                await UpdateStatusAsync(cookies);
                 return LoginResult.CreateSuccess();
             }
 
