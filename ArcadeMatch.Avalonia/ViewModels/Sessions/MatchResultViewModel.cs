@@ -190,9 +190,12 @@ public class MatchResultViewModel : INotifyPropertyChanged
         public MatchResultItemViewModel(MatchedGame game)
         {
             Game = game;
+            OpenSteamCommand = new RelayCommand(_ => OpenSteam());
         }
 
         public MatchedGame Game { get; }
+
+        public ICommand OpenSteamCommand { get; }
 
         public Bitmap? Cover
         {
@@ -206,6 +209,22 @@ public class MatchResultViewModel : INotifyPropertyChanged
 
                 _cover = value;
                 OnPropertyChanged();
+            }
+        }
+
+        private void OpenSteam()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = Game.SteamUri.ToString(),
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Unable to open Steam page: {ex.Message}");
             }
         }
 

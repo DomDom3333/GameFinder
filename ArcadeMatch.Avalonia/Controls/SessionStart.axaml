@@ -1,14 +1,22 @@
 <UserControl
     x:Class="ArcadeMatch.Avalonia.Controls.SessionStart"
+    x:DataType="sessionVm:SessionStartViewModel"
     xmlns="https://github.com/avaloniaui"
+    xmlns:sessionVm="clr-namespace:ArcadeMatch.Avalonia.ViewModels.Sessions"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="450" Spacing="20">
-            <TextBlock HorizontalAlignment="Center" FontSize="20" FontWeight="Bold" Text="Join or Create Session" />
+        <StackPanel
+            HorizontalAlignment="Center"
+            Spacing="20"
+            VerticalAlignment="Center"
+            Width="450">
+            <TextBlock
+                FontSize="20"
+                FontWeight="Bold"
+                HorizontalAlignment="Center"
+                Text="Join or Create Session" />
             <TextBlock Text="Display Name" />
-            <TextBox
-                Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
-                Watermark="Your Display-name" />
+            <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Watermark="Your Display-name" />
             <Button
                 Command="{Binding StartNewSessionCommand}"
                 Content="🎮 Start New Session"
@@ -18,9 +26,7 @@
                 Content="🤝 Join Existing Session"
                 HorizontalAlignment="Stretch" />
             <TextBlock Text="Session Code" />
-            <TextBox
-                MaxLength="4"
-                Text="{Binding SessionCode, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox MaxLength="4" Text="{Binding SessionCode, UpdateSourceTrigger=PropertyChanged}" />
         </StackPanel>
     </Grid>
 </UserControl>

@@ -13,17 +13,24 @@ public partial class Tabs : UserControl
 
     public Tabs()
     {
-        InitializeComponent();
+        // Create and assign ViewModel before InitializeComponent so EndInit (triggered by XAML loader)
+        // can safely access it.
         _viewModel = new TabsViewModel(App.SteamGameService, App.UserConfig, App.Api, App.Settings);
         DataContext = _viewModel;
         _viewModel.Home.MessageRequested += OnMessageRequested;
         _viewModel.MessageRequested += OnMessageRequested;
+
+        InitializeComponent();
     }
 
     public override async void EndInit()
     {
         base.EndInit();
-        await _viewModel.InitializeAsync();
+        var vm = _viewModel ?? DataContext as TabsViewModel;
+        if (vm != null)
+        {
+            await vm.InitializeAsync();
+        }
     }
 
     private void OnMessageRequested(object? sender, MessageRequestedEventArgs e)

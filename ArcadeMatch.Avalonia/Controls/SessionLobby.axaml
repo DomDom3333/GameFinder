@@ -1,5 +1,6 @@
 <UserControl
     x:Class="ArcadeMatch.Avalonia.Controls.SessionLobby"
+    x:DataType="sessionVm:SessionLobbyViewModel"
     xmlns="https://github.com/avaloniaui"
     xmlns:sessionVm="clr-namespace:ArcadeMatch.Avalonia.ViewModels.Sessions"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -32,8 +33,8 @@
                 </StackPanel>
             </Border>
             <ListBox
-                MinHeight="120"
                 ItemsSource="{Binding Users}"
+                MinHeight="120"
                 SelectionMode="Single">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="sessionVm:SessionLobbyViewModel+UserEntryViewModel">
@@ -103,8 +104,8 @@
                 Spacing="10">
                 <Button Command="{Binding LeaveCommand}" Content="🚪 Leave" />
                 <Button
-                    Content="🚀 Start Game"
                     Command="{Binding StartCommand}"
+                    Content="🚀 Start Game"
                     IsEnabled="{Binding IsAdmin}" />
             </StackPanel>
         </StackPanel>
