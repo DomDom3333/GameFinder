@@ -228,5 +228,3 @@ public class HomeTabViewModel : INotifyPropertyChanged
         MessageRequested?.Invoke(this, new MessageRequestedEventArgs(title, message));
     }
 }
-
-public record MessageRequestedEventArgs(string Title, string Message);

@@ -1,51 +1,62 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="ArcadeMatch.Avalonia.Controls.Swiping">
+<UserControl
+    x:Class="ArcadeMatch.Avalonia.Controls.Swiping"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid RowDefinitions="Auto,*">
         <Border Background="#333" Padding="20,10">
             <Grid>
-                <TextBlock Text="🎮 Game Discovery" FontSize="18" FontWeight="SemiBold"/>
-                <Button Content="🚪 Leave Session" HorizontalAlignment="Right" Click="OnLeaveButtonClick"/>
+                <TextBlock FontSize="18" FontWeight="SemiBold" Text="🎮 Game Discovery" />
+                <Button Command="{Binding LeaveCommand}" Content="🚪 Leave Session" HorizontalAlignment="Right" />
             </Grid>
         </Border>
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="30" Spacing="20" HorizontalAlignment="Center" MaxWidth="900" Width="500">
-                <TextBlock Text="Game Name" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" x:Name="GameNameTextBlock"/>
+                <TextBlock HorizontalAlignment="Center" FontSize="20" FontWeight="Bold" Text="{Binding GameName}" />
                 <Border CornerRadius="12">
-                    <Image Height="200" Width="400" x:Name="GameImage" Stretch="UniformToFill"/>
+                    <Image Height="200" Width="400" Stretch="UniformToFill" Source="{Binding GameImage}" />
                 </Border>
-                <TextBlock Text="Short Description" x:Name="DescriptionTextBlock"/>
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" />
                 <StackPanel>
-                    <TextBlock Text="🏷️ Genres"/>
-                    <TextBlock Text="Genres Info" x:Name="GenresTextBlock"/>
+                    <TextBlock Text="🏷️ Genres" />
+                    <TextBlock Text="{Binding Genres}" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel>
-                    <TextBlock Text="🌍 Languages"/>
-                    <TextBlock Text="Languages Info" x:Name="LanguagesTextBlock"/>
+                    <TextBlock Text="🌍 Languages" />
+                    <TextBlock Text="{Binding Languages}" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel>
-                    <TextBlock Text="👨‍💻 Developer"/>
-                    <TextBlock Text="Dev Info" x:Name="DeveloperTextBlock"/>
+                    <TextBlock Text="👨‍💻 Developer" />
+                    <TextBlock Text="{Binding Developers}" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel>
-                    <TextBlock Text="📅 Release"/>
-                    <TextBlock Text="Release Info" x:Name="ReleaseTextBlock"/>
+                    <TextBlock Text="📅 Release" />
+                    <TextBlock Text="{Binding ReleaseDate}" />
                 </StackPanel>
                 <StackPanel>
-                    <TextBlock Text="💰 Pricing"/>
-                    <TextBlock Text="Price Info" x:Name="PriceTextBlock"/>
+                    <TextBlock Text="💰 Pricing" />
+                    <TextBlock Text="{Binding Price}" />
                 </StackPanel>
                 <StackPanel>
-                    <TextBlock Text="⭐ Metacritic"/>
-                    <TextBlock Text="Metacritic Info" x:Name="MetacriticTextBlock"/>
+                    <TextBlock Text="⭐ Metacritic" />
+                    <TextBlock Text="{Binding Metacritic}" />
                 </StackPanel>
                 <StackPanel>
-                    <TextBlock Text="🗣️ Reviews"/>
-                    <TextBlock Text="Review Info" x:Name="ReviewTextBlock"/>
+                    <TextBlock Text="🗣️ Reviews" />
+                    <TextBlock Text="{Binding Reviews}" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,10,0,0">
-                    <Button Content="👎 Pass" Width="120" Height="50" Click="OnDislikeButtonClick" x:Name="Dislike"/>
-                    <Button Content="❤️ Like" Width="120" Height="50" Click="OnLikeButtonClick" x:Name="Like"/>
+                    <Button
+                        Command="{Binding DislikeCommand}"
+                        Content="👎 Pass"
+                        Height="50"
+                        IsEnabled="{Binding IsInteractionEnabled}"
+                        Width="120" />
+                    <Button
+                        Command="{Binding LikeCommand}"
+                        Content="❤️ Like"
+                        Height="50"
+                        IsEnabled="{Binding IsInteractionEnabled}"
+                        Width="120" />
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
