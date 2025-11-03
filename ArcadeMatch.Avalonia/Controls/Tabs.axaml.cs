@@ -1,44 +1,29 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
-using ArcadeMatch.Avalonia.Services;
 using Avalonia.VisualTree;
 using GameFinder.Objects;
-using OpenQA.Selenium;
+using ArcadeMatch.Avalonia.ViewModels.Tabs;
 
 namespace ArcadeMatch.Avalonia.Controls;
 
-public partial class Tabs : UserControl, INotifyPropertyChanged
+public partial class Tabs : UserControl
 {
-    public new event PropertyChangedEventHandler? PropertyChanged;
-
-    private readonly ISteamGameService _steamGameService;
-
-    public bool IsLoggedIn
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoggedIn)));
-                UpdateConnectionStatusUi();
-            }
-        }
-    }
+    private readonly TabsViewModel _viewModel;
 
     public Tabs()
     {
-        _steamGameService = App.SteamGameService;
+        _viewModel = new TabsViewModel(App.SteamGameService, App.UserConfig);
         InitializeComponent();
-        DataContext = this;
+        DataContext = _viewModel;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        ApiKeyBox.Text = _viewModel.SteamApiKey;
+        SteamIdBox.Text = _viewModel.SteamId;
+        UpdateConnectionStatusUi();
         ShowSessionStart();
         App.Api.SessionEnded += OnSessionEnded;
     }
@@ -46,94 +31,48 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
     public override async void EndInit()
     {
         base.EndInit();
-        if (_steamGameService.HasSavedCookies())
-        {
-            await UpdateStatus(_steamGameService.LoadCookies() ?? throw new InvalidOperationException());
-        }
-        IsLoggedIn = await TryGetGameListAsync();
+        await _viewModel.InitializeAsync();
+        UpdateConnectionStatusUi();
     }
 
     async void LoginButton_OnClick(object? sender, RoutedEventArgs e)
     {
         try
         {
-            await ShowLogin();
+            var result = await _viewModel.LoginAsync();
+            if (!result.Success && result.ErrorMessage != null)
+            {
+                await ShowMessageAsync("Error", result.ErrorMessage);
+            }
         }
-        catch (Exception )
+        catch (Exception)
         {
             // Dont know
         }
-    }
-
-    private async Task ShowLogin()
-    {
-        IReadOnlyCollection<Cookie> cookies = _steamGameService.PromptUserToLogin();
-        if (cookies != null &&  cookies.Any())
+        finally
         {
-            await UpdateStatus(cookies);
+            UpdateConnectionStatusUi();
         }
     }
 
     async void ApiFetchButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        App.UserConfig.SteamApiKey = ApiKeyBox.Text?.Trim() ?? string.Empty;
-        App.UserConfig.SteamId = SteamIdBox.Text?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(App.UserConfig.SteamApiKey) || string.IsNullOrWhiteSpace(App.UserConfig.SteamId))
+        var result = await _viewModel.FetchGamesViaApiAsync(ApiKeyBox.Text ?? string.Empty, SteamIdBox.Text ?? string.Empty);
+        if (!result.Success)
         {
-            var window = this.GetVisualRoot() as Window;
-            if (window != null)
-                await App.DialogService.ShowMessageAsync(window, "Error", "Please enter both API key and Steam ID.");
-            return;
+            await ShowMessageAsync("Error", result.ErrorMessage ?? "Unknown error occurred.");
         }
-
-        var games = await _steamGameService.GetOwnedGamesViaApiAsync(App.UserConfig.SteamApiKey, App.UserConfig.SteamId ?? string.Empty);
-        if (games != null)
-        {
-            App.UserConfig.GameList = games;
-            IsLoggedIn = games.Count > 0;
-        }
-        else
-        {
-            IsLoggedIn = false;
-        }
+        UpdateConnectionStatusUi();
     }
 
     async void RefreshButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var result = await _steamGameService.GetOwnedAndWishlistGamesAsync();
-
-        if (result == null)
+        var result = await _viewModel.RefreshGamesAsync();
+        if (!result.Success)
         {
-            var window = this.GetVisualRoot() as Window;
-            if (window != null)
-                await App.DialogService.ShowMessageAsync(window, "Error", "Failed to retrieve cookies. Please log into Steam.");
-            return;
+            await ShowMessageAsync("Error", result.ErrorMessage ?? "Failed to refresh games.");
         }
-
-        App.UserConfig.GameList = result.Value.OwnedGames;
-        App.UserConfig.WishlistGames = result.Value.WishlistGames;
-        IsLoggedIn = result.Value.OwnedGames.Count > 0;
-    }
-
-    async Task<bool> TryGetGameListAsync()
-    {
-        try
-        {
-            var result = await _steamGameService.GetOwnedAndWishlistGamesAsync();
-
-            if (result != null)
-            {
-                App.UserConfig.GameList = result.Value.OwnedGames;
-                App.UserConfig.WishlistGames = result.Value.WishlistGames;
-                return result.Value.OwnedGames.Count > 0;
-            }
-            return false;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            return false;
-        }
+        UpdateConnectionStatusUi();
     }
 
     void OnSessionButtonClicked(object? sender, string action)
@@ -190,25 +129,34 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
     {
         if (StatusBorder != null && StatusTextBlock != null)
         {
-            if (IsLoggedIn)
+            if (_viewModel.IsLoggedIn)
             {
                 StatusBorder.Background = new SolidColorBrush(Color.Parse("#44AA44"));
-                StatusTextBlock.Text = "Connected";
+                StatusTextBlock.Text = _viewModel.SteamStatusText;
             }
             else
             {
                 StatusBorder.Background = new SolidColorBrush(Color.Parse("#FF4444"));
-                StatusTextBlock.Text = "Not Connected";
+                StatusTextBlock.Text = _viewModel.SteamStatusText;
             }
         }
     }
 
-    private async Task UpdateStatus(IReadOnlyCollection<Cookie> cookies)
+    private async Task ShowMessageAsync(string title, string message)
     {
-        _steamGameService.ParseCookiesForData(cookies);
-        var steamId = App.UserConfig.SteamId;
-        App.UserConfig.UserProfile = steamId != null ? await SteamProfileFetcher.GetProfileAsync(steamId) : null;
-        App.UserConfig.Username = App.UserConfig.UserProfile?.SteamId ?? string.Empty;
+        var window = this.GetVisualRoot() as Window;
+        if (window != null)
+        {
+            await App.DialogService.ShowMessageAsync(window, title, message);
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TabsViewModel.IsLoggedIn) || e.PropertyName == nameof(TabsViewModel.SteamStatusText))
+        {
+            UpdateConnectionStatusUi();
+        }
     }
 }
 
