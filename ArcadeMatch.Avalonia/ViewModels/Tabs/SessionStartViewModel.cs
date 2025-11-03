@@ -25,9 +25,23 @@ public class SessionStartViewModel : INotifyPropertyChanged
         {
             _displayName = _userConfig.UserProfile?.SteamId ?? string.Empty;
         }
+
+        _userConfig.PropertyChanged += OnUserConfigPropertyChanged;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnUserConfigPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IUserConfigStore.Username))
+        {
+            if (!string.IsNullOrWhiteSpace(_userConfig.Username) && string.IsNullOrWhiteSpace(_displayName))
+            {
+                _displayName = _userConfig.Username;
+                OnPropertyChanged(nameof(DisplayName));
+            }
+        }
+    }
 
     public string DisplayName
     {

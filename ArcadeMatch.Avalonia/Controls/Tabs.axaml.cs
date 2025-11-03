@@ -68,14 +68,14 @@ public partial class Tabs : UserControl
     private void ShowSwiping()
     {
         var swiping = new Swiping();
-        swiping.LeaveClicked += () => ShowSessionStart();
+        swiping.LeaveClicked += ShowSessionStart;
         SessionContentControl.Content = swiping;
     }
 
     private void ShowResults(IReadOnlyList<MatchedGame> games)
     {
         var result = new MatchResult(games);
-        result.BackClicked += () => ShowSessionStart();
+        result.BackClicked += ShowSessionStart;
         SessionContentControl.Content = result;
     }
 
@@ -86,9 +86,25 @@ public partial class Tabs : UserControl
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        base.OnDetachedFromVisualTree(e);
-        _viewModel.Home.MessageRequested -= OnHomeMessageRequested;
-        App.Api.SessionEnded -= OnSessionEnded;
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(UpdateConnectionStatusUi);
+            return;
+        }
+
+        if (StatusBorder != null && StatusTextBlock != null)
+        {
+            if (_viewModel.IsLoggedIn)
+            {
+                StatusBorder.Background = new SolidColorBrush(Color.Parse("#44AA44"));
+                StatusTextBlock.Text = _viewModel.SteamStatusText;
+            }
+            else
+            {
+                StatusBorder.Background = new SolidColorBrush(Color.Parse("#FF4444"));
+                StatusTextBlock.Text = _viewModel.SteamStatusText;
+            }
+        }
     }
 
     private async Task ShowMessageAsync(string title, string message)

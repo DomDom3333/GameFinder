@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using GameFinder.Objects;
 
+using System.ComponentModel;
+
 namespace ArcadeMatch.Avalonia.Services;
 
-public interface IUserConfigStore
+public interface IUserConfigStore : INotifyPropertyChanged
 {
     string Username { get; set; }
     string SteamApiKey { get; set; }
