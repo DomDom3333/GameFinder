@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using GameFinder.Objects;
@@ -20,10 +18,7 @@ public partial class Tabs : UserControl
         _viewModel = new TabsViewModel(App.SteamGameService, App.UserConfig);
         InitializeComponent();
         DataContext = _viewModel;
-        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-        ApiKeyBox.Text = _viewModel.SteamApiKey;
-        SteamIdBox.Text = _viewModel.SteamId;
-        UpdateConnectionStatusUi();
+        _viewModel.Home.MessageRequested += OnHomeMessageRequested;
         ShowSessionStart();
         App.Api.SessionEnded += OnSessionEnded;
     }
@@ -32,47 +27,11 @@ public partial class Tabs : UserControl
     {
         base.EndInit();
         await _viewModel.InitializeAsync();
-        UpdateConnectionStatusUi();
     }
 
-    async void LoginButton_OnClick(object? sender, RoutedEventArgs e)
+    private void OnHomeMessageRequested(object? sender, MessageRequestedEventArgs e)
     {
-        try
-        {
-            var result = await _viewModel.LoginAsync();
-            if (!result.Success && result.ErrorMessage != null)
-            {
-                await ShowMessageAsync("Error", result.ErrorMessage);
-            }
-        }
-        catch (Exception)
-        {
-            // Dont know
-        }
-        finally
-        {
-            UpdateConnectionStatusUi();
-        }
-    }
-
-    async void ApiFetchButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        var result = await _viewModel.FetchGamesViaApiAsync(ApiKeyBox.Text ?? string.Empty, SteamIdBox.Text ?? string.Empty);
-        if (!result.Success)
-        {
-            await ShowMessageAsync("Error", result.ErrorMessage ?? "Unknown error occurred.");
-        }
-        UpdateConnectionStatusUi();
-    }
-
-    async void RefreshButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        var result = await _viewModel.RefreshGamesAsync();
-        if (!result.Success)
-        {
-            await ShowMessageAsync("Error", result.ErrorMessage ?? "Failed to refresh games.");
-        }
-        UpdateConnectionStatusUi();
+        Dispatcher.UIThread.Post(() => _ = ShowMessageAsync(e.Title, e.Message));
     }
 
     void OnSessionButtonClicked(object? sender, string action)
@@ -125,21 +84,11 @@ public partial class Tabs : UserControl
         Dispatcher.UIThread.Post(() => ShowResults(games));
     }
 
-    private void UpdateConnectionStatusUi()
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        if (StatusBorder != null && StatusTextBlock != null)
-        {
-            if (_viewModel.IsLoggedIn)
-            {
-                StatusBorder.Background = new SolidColorBrush(Color.Parse("#44AA44"));
-                StatusTextBlock.Text = _viewModel.SteamStatusText;
-            }
-            else
-            {
-                StatusBorder.Background = new SolidColorBrush(Color.Parse("#FF4444"));
-                StatusTextBlock.Text = _viewModel.SteamStatusText;
-            }
-        }
+        base.OnDetachedFromVisualTree(e);
+        _viewModel.Home.MessageRequested -= OnHomeMessageRequested;
+        App.Api.SessionEnded -= OnSessionEnded;
     }
 
     private async Task ShowMessageAsync(string title, string message)
@@ -148,14 +97,6 @@ public partial class Tabs : UserControl
         if (window != null)
         {
             await App.DialogService.ShowMessageAsync(window, title, message);
-        }
-    }
-
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(TabsViewModel.IsLoggedIn) || e.PropertyName == nameof(TabsViewModel.SteamStatusText))
-        {
-            UpdateConnectionStatusUi();
         }
     }
 }
