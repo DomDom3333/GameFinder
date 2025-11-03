@@ -8,7 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia;
 using ArcadeMatch.Avalonia;
-using ArcadeMatch.Avalonia.Shared;
+using ArcadeMatch.Avalonia.Services;
 
 namespace ArcadeMatch.Avalonia.Controls;
 
@@ -155,7 +155,7 @@ public partial class SessionLobby : UserControl, INotifyPropertyChanged
         UsersListBox.ItemsSource = _users;
         SessionId = App.Api.SessionId;
         UpdateSessionCode();
-        SetCurrentUser(Config.Username, App.Api.IsCurrentUserAdmin);
+        SetCurrentUser(App.UserConfig.Username, App.Api.IsCurrentUserAdmin);
         App.Api.UserJoinedSession += AddUser;
         App.Api.UserLeftSession += RemoveUser;
         App.Api.SessionStarted += OnSessionStarted;

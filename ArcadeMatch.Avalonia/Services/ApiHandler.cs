@@ -1,12 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Tasks;
 using GameFinder;
 using GameFinder.Objects;
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace ArcadeMatch.Avalonia.Shared;
+namespace ArcadeMatch.Avalonia.Services;
 
-public class ApiHandler
+public class ApiHandler : ISessionApi
 {
+    private readonly IUserConfigStore _configStore;
     public HubConnection? Connection { get; set; }
     public string SessionId { get; private set; } = string.Empty;
     private string _currentUser = string.Empty;
@@ -26,6 +32,11 @@ public class ApiHandler
     public event Action<string>? ErrorOccurred;
     public event Action<IReadOnlyList<MatchedGame>>? SessionEnded;
     public event Action<IReadOnlyList<string>, string?>? SessionStateReceived;
+
+    public ApiHandler(IUserConfigStore configStore)
+    {
+        _configStore = configStore;
+    }
 
     public async Task Connect(string[] args)
     {
@@ -94,8 +105,9 @@ public class ApiHandler
         });
         connection.On<IEnumerable<string>>("SessionStarted", commonGames =>
         {
-            Config.CommonGames = commonGames.ToList();
-            SessionStarted?.Invoke(commonGames);
+            var games = commonGames?.ToList() ?? new List<string>();
+            _configStore.CommonGames = games;
+            SessionStarted?.Invoke(games);
         });
         connection.On<string, string, bool>("UserSwiped", (userId, game, swipeRight) => UserSwiped?.Invoke(userId, game, swipeRight));
         connection.On<string>("GameMatched", game => GameMatched?.Invoke(game));
@@ -112,7 +124,7 @@ public class ApiHandler
         if (Connection != null) await Connection.InvokeAsync("CreateSession");
     }
 
-    public async Task JoinSessionAsync(string sessionCode, string username, List<string> gameList, List<string> wishlist)
+    public async Task JoinSessionAsync(string sessionCode, string username, IEnumerable<string> gameList, IEnumerable<string> wishlist)
     {
         SessionId = sessionCode;
         _currentUser = username;
@@ -127,7 +139,7 @@ public class ApiHandler
         SessionId = string.Empty;
         _currentUser = string.Empty;
         IsCurrentUserAdmin = false;
-        Config.CommonGames.Clear();
+        _configStore.CommonGames.Clear();
         _sessionRoster.Clear();
         CurrentAdminUser = null;
     }

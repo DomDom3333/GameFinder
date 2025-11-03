@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using Avalonia.Media;
-using ArcadeMatch.Avalonia.Helpers;
-using ArcadeMatch.Avalonia.Shared;
-using GameFinder.Objects;
+using Avalonia.Threading;
+using ArcadeMatch.Avalonia.Services;
 using Avalonia.VisualTree;
+using GameFinder.Objects;
 using OpenQA.Selenium;
 
 namespace ArcadeMatch.Avalonia.Controls;
@@ -18,7 +18,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
 {
     public new event PropertyChangedEventHandler? PropertyChanged;
 
-    private readonly SteamGameService _steamGameService;
+    private readonly ISteamGameService _steamGameService;
 
     public bool IsLoggedIn
     {
@@ -36,7 +36,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
 
     public Tabs()
     {
-        _steamGameService = new SteamGameService();
+        _steamGameService = App.SteamGameService;
         InitializeComponent();
         DataContext = this;
         ShowSessionStart();
@@ -48,7 +48,7 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         base.EndInit();
         if (_steamGameService.HasSavedCookies())
         {
-            await UpdateStatus(SteamGameService.LoadCookies() ?? throw new InvalidOperationException());
+            await UpdateStatus(_steamGameService.LoadCookies() ?? throw new InvalidOperationException());
         }
         IsLoggedIn = await TryGetGameListAsync();
     }
@@ -76,20 +76,20 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
 
     async void ApiFetchButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        Config.SteamApiKey = ApiKeyBox.Text?.Trim() ?? string.Empty;
-        Config.SteamId = SteamIdBox.Text?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(Config.SteamApiKey) || string.IsNullOrWhiteSpace(Config.SteamId))
+        App.UserConfig.SteamApiKey = ApiKeyBox.Text?.Trim() ?? string.Empty;
+        App.UserConfig.SteamId = SteamIdBox.Text?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(App.UserConfig.SteamApiKey) || string.IsNullOrWhiteSpace(App.UserConfig.SteamId))
         {
             var window = this.GetVisualRoot() as Window;
             if (window != null)
-                await DialogHelper.ShowMessageAsync(window, "Error", "Please enter both API key and Steam ID.");
+                await App.DialogService.ShowMessageAsync(window, "Error", "Please enter both API key and Steam ID.");
             return;
         }
-        
-        var games = await _steamGameService.GetOwnedGamesViaApiAsync(Config.SteamApiKey, Config.SteamId);
+
+        var games = await _steamGameService.GetOwnedGamesViaApiAsync(App.UserConfig.SteamApiKey, App.UserConfig.SteamId ?? string.Empty);
         if (games != null)
         {
-            Config.GameList = games;
+            App.UserConfig.GameList = games;
             IsLoggedIn = games.Count > 0;
         }
         else
@@ -101,17 +101,17 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
     async void RefreshButton_OnClick(object? sender, RoutedEventArgs e)
     {
         var result = await _steamGameService.GetOwnedAndWishlistGamesAsync();
-        
+
         if (result == null)
         {
             var window = this.GetVisualRoot() as Window;
             if (window != null)
-                await DialogHelper.ShowMessageAsync(window, "Error", "Failed to retrieve cookies. Please log into Steam.");
+                await App.DialogService.ShowMessageAsync(window, "Error", "Failed to retrieve cookies. Please log into Steam.");
             return;
         }
-        
-        Config.GameList = result.Value.OwnedGames;
-        Config.WishlistGames = result.Value.WishlistGames;
+
+        App.UserConfig.GameList = result.Value.OwnedGames;
+        App.UserConfig.WishlistGames = result.Value.WishlistGames;
         IsLoggedIn = result.Value.OwnedGames.Count > 0;
     }
 
@@ -120,11 +120,11 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
         try
         {
             var result = await _steamGameService.GetOwnedAndWishlistGamesAsync();
-            
+
             if (result != null)
             {
-                Config.GameList = result.Value.OwnedGames;
-                Config.WishlistGames = result.Value.WishlistGames;
+                App.UserConfig.GameList = result.Value.OwnedGames;
+                App.UserConfig.WishlistGames = result.Value.WishlistGames;
                 return result.Value.OwnedGames.Count > 0;
             }
             return false;
@@ -205,9 +205,10 @@ public partial class Tabs : UserControl, INotifyPropertyChanged
 
     private async Task UpdateStatus(IReadOnlyCollection<Cookie> cookies)
     {
-        SteamGameService.ParseCookiesForData(cookies);
-        Config.UserProfile = Config.SteamId != null ? await SteamProfileFetcher.GetProfileAsync(Config.SteamId) : null;
-        Config.Username = Config.UserProfile?.SteamId ?? string.Empty;
+        _steamGameService.ParseCookiesForData(cookies);
+        var steamId = App.UserConfig.SteamId;
+        App.UserConfig.UserProfile = steamId != null ? await SteamProfileFetcher.GetProfileAsync(steamId) : null;
+        App.UserConfig.Username = App.UserConfig.UserProfile?.SteamId ?? string.Empty;
     }
 }
 

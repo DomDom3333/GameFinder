@@ -1,21 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
-using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using ArcadeMatch.Avalonia.Helpers;
-using GameFinder.Objects;
-using ArcadeMatch.Avalonia;
-using ArcadeMatch.Avalonia.Shared;
-using GameFinder;
 using Avalonia.VisualTree;
+using ArcadeMatch.Avalonia;
+using ArcadeMatch.Avalonia.Helpers;
+using ArcadeMatch.Avalonia.Services;
+using GameFinder;
+using GameFinder.Objects;
 
 namespace ArcadeMatch.Avalonia.Controls;
 
@@ -33,7 +33,7 @@ public partial class Swiping : UserControl
 
     public Swiping()
     {
-        _gameQueue = new Queue<string>(Config.CommonGames);
+        _gameQueue = new Queue<string>(App.UserConfig.CommonGames);
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
         InitializeComponent();
         App.Api.GameMatched += OnGameMatched;
@@ -69,7 +69,7 @@ public partial class Swiping : UserControl
                 seenGameIds.Add(gameId);
                 return (cached, gameId);
             }
-            var apiUrl = $"http://127.0.0.1:5170/SteamMarketData/{gameId}";
+            var apiUrl = $"{App.Settings.Server.SteamMarketDataUrl}{gameId}";
             try
             {
                 var jsonData = await httpClient.GetStringAsync(apiUrl);
@@ -172,8 +172,12 @@ public partial class Swiping : UserControl
         string displayName = match?.Data.Name ?? gameId;
         string likesDisplay = match?.LikesDisplay ?? "Everyone liked this pick!";
         Dispatcher.UIThread.Post(async () =>
-            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Match", $"{displayName}\n{likesDisplay}")
-        );
+        {
+            if (this.GetVisualRoot() is Window window)
+            {
+                await App.DialogService.ShowMessageAsync(window, "Match", $"{displayName}\n{likesDisplay}");
+            }
+        });
     }
 
     void Swiping_Unloaded(object? sender, RoutedEventArgs e)
@@ -183,7 +187,7 @@ public partial class Swiping : UserControl
 
     async void OnLeaveButtonClick(object? sender, RoutedEventArgs e)
     {
-        await App.Api.LeaveSessionAsync(Config.Username);
+        await App.Api.LeaveSessionAsync(App.UserConfig.Username);
         LeaveClicked?.Invoke();
     }
 }
