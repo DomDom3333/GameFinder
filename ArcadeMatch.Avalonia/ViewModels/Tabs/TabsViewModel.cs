@@ -1,53 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using ArcadeMatch.Avalonia.Services;
-using OpenQA.Selenium;
 
 namespace ArcadeMatch.Avalonia.ViewModels.Tabs;
 
-public class TabsViewModel : INotifyPropertyChanged
+public class TabsViewModel
 {
-    private readonly ISteamGameService _steamGameService;
-    private readonly IUserConfigStore _userConfig;
-
-    private bool _isLoggedIn;
-    private string _steamStatusText = "Not Connected";
-    private string _steamApiKey;
-    private string _steamId;
-
-    public TabsViewModel(
-        ISteamGameService steamGameService,
-        IUserConfigStore userConfig)
+    public TabsViewModel(ISteamGameService steamGameService, IUserConfigStore userConfig)
     {
-        _steamGameService = steamGameService;
-        _userConfig = userConfig;
-
-        _steamApiKey = _userConfig.SteamApiKey;
-        _steamId = _userConfig.SteamId ?? string.Empty;
-        _isLoggedIn = _userConfig.GameList.Count > 0;
-        _steamStatusText = _isLoggedIn ? "Connected" : "Not Connected";
+        Home = new HomeTabViewModel(steamGameService, userConfig);
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
+    public HomeTabViewModel Home { get; }
 
-    public bool IsLoggedIn
+    public Task InitializeAsync()
     {
-        get => _isLoggedIn;
-        private set
-        {
-            if (_isLoggedIn == value)
-            {
-                return;
-            }
-
-            _isLoggedIn = value;
-            SteamStatusText = value ? "Connected" : "Not Connected";
-            OnPropertyChanged();
-        }
+        return Home.InitializeAsync();
     }
 
     public string SteamStatusText
@@ -190,33 +157,6 @@ public class TabsViewModel : INotifyPropertyChanged
 
     public void UpdateSteamStatusFromSession(bool isConnected)
     {
-        IsLoggedIn = isConnected;
-    }
-
-    private async Task UpdateStatusAsync(IReadOnlyCollection<Cookie> cookies)
-    {
-        _steamGameService.ParseCookiesForData(cookies);
-        var steamId = _userConfig.SteamId;
-        _userConfig.UserProfile = steamId != null
-            ? await SteamProfileFetcher.GetProfileAsync(steamId).ConfigureAwait(false)
-            : null;
-        _userConfig.Username = _userConfig.UserProfile?.SteamId ?? string.Empty;
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    public record LoginResult(bool Success, string? ErrorMessage)
-    {
-        public static LoginResult CreateSuccess() => new(true, null);
-        public static LoginResult CreateFailure(string message) => new(false, message);
-    }
-
-    public record GameListResult(bool Success, string? ErrorMessage)
-    {
-        public static GameListResult CreateSuccess() => new(true, null);
-        public static GameListResult CreateFailure(string message) => new(false, message);
+        Home.UpdateSteamStatusFromSession(isConnected);
     }
 }
