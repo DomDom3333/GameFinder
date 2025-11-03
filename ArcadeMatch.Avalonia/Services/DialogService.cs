@@ -4,11 +4,11 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-namespace ArcadeMatch.Avalonia.Helpers;
+namespace ArcadeMatch.Avalonia.Services;
 
-public static class DialogHelper
+public class DialogService : IDialogService
 {
-    public static async Task ShowMessageAsync(Window owner, string title, string message)
+    public async Task ShowMessageAsync(Window owner, string title, string message)
     {
         var okButton = new Button
         {

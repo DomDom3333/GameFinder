@@ -2,33 +2,37 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Web;
+using System.Threading.Tasks;
 using GameFinder.Objects;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using Cookie = OpenQA.Selenium.Cookie;
 
-namespace ArcadeMatch.Avalonia.Shared;
+namespace ArcadeMatch.Avalonia.Services;
 
 /// <summary>
 /// Service for retrieving owned games and wishlist from Steam using cookies or API.
 /// </summary>
-public class SteamGameService
+public class SteamGameService : ISteamGameService
 {
     private const string SteamLoginUrl = "https://store.steampowered.com/login/";
     private const string UserDataUrl = "https://store.steampowered.com/dynamicstore/userdata/";
     private const string DefaultCookiesFilePath = "cookies.json";
 
     private readonly string _cookiesFilePath;
+    private readonly IUserConfigStore _configStore;
 
-    public SteamGameService(string? cookiesFilePath = null)
+    public SteamGameService(IUserConfigStore configStore, string? cookiesFilePath = null)
     {
+        _configStore = configStore;
         _cookiesFilePath = cookiesFilePath ?? DefaultCookiesFilePath;
     }
 
@@ -122,11 +126,11 @@ public class SteamGameService
         }
     }
 
-    internal static void ParseCookiesForData(IReadOnlyCollection<Cookie> cookies)
+    public void ParseCookiesForData(IReadOnlyCollection<Cookie> cookies)
     {
         Cookie? loginToken = cookies.FirstOrDefault(x => x.Name == "steamLoginSecure");
         string steamId = loginToken?.Value.Split('%').FirstOrDefault() ?? string.Empty;
-        Config.SteamId = steamId;
+        _configStore.SteamId = steamId;
     }
 
     /// <summary>
@@ -149,8 +153,10 @@ public class SteamGameService
     /// </summary>
     /// <param name="path">File path to load cookies from.</param>
     /// <returns>Collection of cookies if successful, null otherwise.</returns>
-    public static IReadOnlyCollection<Cookie>? LoadCookies(string path = DefaultCookiesFilePath)
+    public IReadOnlyCollection<Cookie>? LoadCookies(string? path = null)
     {
+        path ??= _cookiesFilePath;
+
         if (!File.Exists(path))
             return null;
 

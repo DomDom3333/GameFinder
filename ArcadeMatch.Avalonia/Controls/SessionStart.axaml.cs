@@ -1,11 +1,10 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using ArcadeMatch.Avalonia.Helpers;
-using ArcadeMatch.Avalonia;
-using ArcadeMatch.Avalonia.Shared;
-using Avalonia;
 using Avalonia.VisualTree;
+using ArcadeMatch.Avalonia;
+using ArcadeMatch.Avalonia.Services;
 
 namespace ArcadeMatch.Avalonia.Controls;
 
@@ -16,17 +15,17 @@ public partial class SessionStart : UserControl
     public SessionStart()
     {
         InitializeComponent();
-        if (Config.UserProfile != null)
+        if (App.UserConfig.UserProfile != null)
         {
-            DisplaynameBox.Text = Config.UserProfile.SteamId;
+            DisplaynameBox.Text = App.UserConfig.UserProfile.SteamId;
         }
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        if (Config.UserProfile != null)
+        if (App.UserConfig.UserProfile != null)
         {
-            DisplaynameBox.Text = Config.UserProfile.SteamId;
+            DisplaynameBox.Text = App.UserConfig.UserProfile.SteamId;
         }
     }
 
@@ -35,19 +34,22 @@ public partial class SessionStart : UserControl
         if (string.IsNullOrWhiteSpace(DisplaynameBox.Text))
         {
             DisplaynameBox.Text = "Your Display-name";
-            Config.Username = string.Empty;
+            App.UserConfig.Username = string.Empty;
         }
         else
         {
-            Config.Username = DisplaynameBox.Text;
+            App.UserConfig.Username = DisplaynameBox.Text;
         }
     }
 
     async void StartNewSession_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(Config.Username))
+        if (string.IsNullOrWhiteSpace(App.UserConfig.Username))
         {
-            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Please enter a valid Username");
+            if (this.GetVisualRoot() is Window owner)
+            {
+                await App.DialogService.ShowMessageAsync(owner, "Error", "Please enter a valid Username");
+            }
             return;
         }
         await App.Api.CreateSessionAsync();
@@ -55,23 +57,30 @@ public partial class SessionStart : UserControl
         {
             await Task.Delay(200);
         }
-        await App.Api.JoinSessionAsync(App.Api.SessionId, Config.Username, Config.GameList, Config.WishlistGames);
+        await App.Api.JoinSessionAsync(App.Api.SessionId, App.UserConfig.Username, App.UserConfig.GameList, App.UserConfig.WishlistGames);
         SessionButtonClicked?.Invoke(this, "StartNewSession");
     }
 
     async void JoinSession_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (SessionCodeBox.Text.Length != 4)
+        string? sessionCode = SessionCodeBox.Text;
+        if (string.IsNullOrWhiteSpace(sessionCode) || sessionCode.Length != 4)
         {
-            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Please enter a valid Session Code");
+            if (this.GetVisualRoot() is Window owner)
+            {
+                await App.DialogService.ShowMessageAsync(owner, "Error", "Please enter a valid Session Code");
+            }
             return;
         }
-        if (string.IsNullOrWhiteSpace(Config.Username))
+        if (string.IsNullOrWhiteSpace(App.UserConfig.Username))
         {
-            await DialogHelper.ShowMessageAsync((Window)this.GetVisualRoot(), "Error", "Please enter a valid Username");
+            if (this.GetVisualRoot() is Window owner)
+            {
+                await App.DialogService.ShowMessageAsync(owner, "Error", "Please enter a valid Username");
+            }
             return;
         }
-        await App.Api.JoinSessionAsync(SessionCodeBox.Text, Config.Username, Config.GameList, Config.WishlistGames);
+        await App.Api.JoinSessionAsync(sessionCode, App.UserConfig.Username, App.UserConfig.GameList, App.UserConfig.WishlistGames);
         SessionButtonClicked?.Invoke(this, "JoinSession");
     }
 }
