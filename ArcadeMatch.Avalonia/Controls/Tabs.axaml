@@ -1,54 +1,81 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:ArcadeMatch.Avalonia.Converters"
-             xmlns:vm="clr-namespace:ArcadeMatch.Avalonia.ViewModels.Tabs"
-             x:Class="ArcadeMatch.Avalonia.Controls.Tabs"
-             x:DataType="vm:TabsViewModel">
+<UserControl
+    x:Class="ArcadeMatch.Avalonia.Controls.Tabs"
+    x:DataType="vm:TabsViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:converters="clr-namespace:ArcadeMatch.Avalonia.Converters"
+    xmlns:vm="clr-namespace:ArcadeMatch.Avalonia.ViewModels.Tabs"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
         <converters:IsLoggedInToBrushConverter x:Key="IsLoggedInToBrushConverter" />
     </UserControl.Resources>
     <TabControl>
-        <TabItem Header="Home" DataContext="{Binding Home}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" x:DataType="vm:HomeTabViewModel">
+        <TabItem Header="Home">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="20">
-                    <TextBlock Text="Steam Authentication" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock
+                        FontSize="20"
+                        FontWeight="Bold"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,10"
+                        Text="Steam Authentication" />
                     <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="1️⃣ Click the login button below"/>
-                        <TextBlock Text="2️⃣ Complete Steam authentication in browser"/>
-                        <TextBlock Text="3️⃣ Click refresh to verify login status"/>
-                        <TextBlock Text="4️⃣ Keep browser open until verification is complete"/>
+                        <TextBlock Text="1️⃣ Click the login button below" />
+                        <TextBlock Text="2️⃣ Complete Steam authentication in browser" />
+                        <TextBlock Text="3️⃣ Click refresh to verify login status" />
+                        <TextBlock Text="4️⃣ Keep browser open until verification is complete" />
                     </StackPanel>
                     <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="🔐 Authentication Status" Margin="0,0,0,10"/>
-                        <Border CornerRadius="15" Padding="15,8" Margin="0,0,15,0" Background="{Binding IsLoggedIn, Converter={StaticResource IsLoggedInToBrushConverter}}">
+                        <TextBlock Margin="0,0,0,10" Text="🔐 Authentication Status" />
+                        <Border
+                            Background="{Binding Home.IsLoggedIn, Converter={StaticResource IsLoggedInToBrushConverter}}"
+                            CornerRadius="15"
+                            Margin="0,0,15,0"
+                            Padding="15,8">
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse Fill="White" Width="12" Height="12" Margin="0,0,8,0"/>
-                                <TextBlock FontWeight="Bold" Foreground="White" Text="{Binding ConnectionStatus}"/>
+                                <Ellipse
+                                    Fill="White"
+                                    Height="12"
+                                    Margin="0,0,8,0"
+                                    Width="12" />
+                                <TextBlock
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    Text="{Binding Home.ConnectionStatus}" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                        <Button Content="🔑 Login to Steam" Command="{Binding LoginCommand}"/>
-                        <Button Content="🔄 Refresh Status" Command="{Binding RefreshCommand}"/>
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="10">
+                        <Button Command="{Binding Home.LoginCommand}" Content="🔑 Login to Steam" />
+                        <Button Command="{Binding Home.RefreshCommand}" Content="🔄 Refresh Status" />
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </TabItem>
         <TabItem Header="Session">
-            <ContentControl x:Name="SessionContentControl"/>
+            <ContentControl x:Name="SessionContentControl" />
         </TabItem>
-        <TabItem Header="Settings" DataContext="{Binding Home}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" x:DataType="vm:HomeTabViewModel">
+        <TabItem Header="Settings">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="20">
-                    <TextBlock Text="Configuration" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                    <TextBlock Text="🔐 Steam API Key"/>
-                    <TextBox Text="{Binding SteamApiKey, Mode=TwoWay}" Margin="0,0,0,20"/>
-                    <TextBlock Text="🆔 Steam ID"/>
-                    <TextBox Text="{Binding SteamId, Mode=TwoWay}" Margin="0,0,0,20"/>
-                    <Button Content="🔄 Fetch via API" HorizontalAlignment="Center" Command="{Binding FetchViaApiCommand}"/>
+                    <TextBlock
+                        FontSize="20"
+                        FontWeight="Bold"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,20"
+                        Text="Configuration" />
+                    <TextBlock Text="🔐 Steam API Key" />
+                    <TextBox Margin="0,0,0,20" Text="{Binding Home.SteamApiKey, Mode=TwoWay}" />
+                    <TextBlock Text="🆔 Steam ID" />
+                    <TextBox Margin="0,0,0,20" Text="{Binding Home.SteamId, Mode=TwoWay}" />
+                    <Button
+                        Command="{Binding Home.FetchViaApiCommand}"
+                        Content="🔄 Fetch via API"
+                        HorizontalAlignment="Center" />
                 </StackPanel>
             </ScrollViewer>
         </TabItem>
     </TabControl>
 </UserControl>
-

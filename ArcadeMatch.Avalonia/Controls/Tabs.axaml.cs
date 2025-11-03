@@ -16,8 +16,8 @@ public partial class Tabs : UserControl
     public Tabs()
     {
         _viewModel = new TabsViewModel(App.SteamGameService, App.UserConfig);
-        InitializeComponent();
         DataContext = _viewModel;
+        InitializeComponent();
         _viewModel.Home.MessageRequested += OnHomeMessageRequested;
         ShowSessionStart();
         App.Api.SessionEnded += OnSessionEnded;
@@ -100,4 +100,3 @@ public partial class Tabs : UserControl
         }
     }
 }
-
