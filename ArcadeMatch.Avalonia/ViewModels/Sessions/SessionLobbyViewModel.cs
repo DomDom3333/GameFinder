@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using ArcadeMatch.Avalonia.Commands;
 using ArcadeMatch.Avalonia.Services;
-using ArcadeMatch.Avalonia.ViewModels;
 using Avalonia.Threading;
 
 namespace ArcadeMatch.Avalonia.ViewModels.Sessions;
@@ -19,15 +14,9 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
     private readonly IUserConfigStore _userConfig;
 
     private readonly ObservableCollection<UserEntryViewModel> _users = new();
-    private readonly ReadOnlyObservableCollection<UserEntryViewModel> _readOnlyUsers;
 
-    private bool _isAdmin;
-    private string _currentUser = string.Empty;
-    private string _sessionId = string.Empty;
-    private int _lobbyUserCount = 1;
-    private bool _includeWishlist;
-    private int _minOwners;
-    private int _minWishlisted;
+    private string _currentUser;
+    private string _sessionId;
 
     public SessionLobbyViewModel(ISessionApi sessionApi, IUserConfigStore userConfig)
     {
@@ -36,7 +25,7 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
 
         _currentUser = _userConfig.Username;
         _sessionId = _sessionApi.SessionId;
-        _readOnlyUsers = new ReadOnlyObservableCollection<UserEntryViewModel>(_users);
+        Users = new ReadOnlyObservableCollection<UserEntryViewModel>(_users);
 
         LeaveCommand = new AsyncCommand(LeaveSessionAsync);
         StartCommand = new AsyncCommand(StartSessionAsync, () => IsAdmin && !string.IsNullOrWhiteSpace(SessionId));
@@ -73,19 +62,19 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand CopyCodeCommand { get; }
 
-    public ReadOnlyObservableCollection<UserEntryViewModel> Users => _readOnlyUsers;
+    public ReadOnlyObservableCollection<UserEntryViewModel> Users { get; }
 
     public int LobbyUserCount
     {
-        get => _lobbyUserCount;
+        get;
         private set
         {
-            if (_lobbyUserCount == value)
+            if (field == value)
             {
                 return;
             }
 
-            _lobbyUserCount = Math.Max(1, value);
+            field = Math.Max(1, value);
             OnPropertyChanged();
             (StartCommand as AsyncCommand)?.RaiseCanExecuteChanged();
         }
@@ -93,45 +82,45 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
 
     public int MinOwners
     {
-        get => _minOwners;
+        get;
         set
         {
-            if (_minOwners == value)
+            if (field == value)
             {
                 return;
             }
 
-            _minOwners = value;
+            field = value;
             OnPropertyChanged();
         }
     }
 
     public int MinWishlisted
     {
-        get => _minWishlisted;
+        get;
         set
         {
-            if (_minWishlisted == value)
+            if (field == value)
             {
                 return;
             }
 
-            _minWishlisted = value;
+            field = value;
             OnPropertyChanged();
         }
     }
 
     public bool IncludeWishlist
     {
-        get => _includeWishlist;
+        get;
         set
         {
-            if (_includeWishlist == value)
+            if (field == value)
             {
                 return;
             }
 
-            _includeWishlist = value;
+            field = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsWishlistSliderEnabled));
         }
@@ -149,7 +138,7 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            _sessionId = value ?? string.Empty;
+            _sessionId = value;
             OnPropertyChanged();
             (CopyCodeCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (StartCommand as AsyncCommand)?.RaiseCanExecuteChanged();
@@ -158,15 +147,15 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
 
     public bool IsAdmin
     {
-        get => _isAdmin;
+        get;
         private set
         {
-            if (_isAdmin == value)
+            if (field == value)
             {
                 return;
             }
 
-            _isAdmin = value;
+            field = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsWishlistSliderEnabled));
             (StartCommand as AsyncCommand)?.RaiseCanExecuteChanged();
@@ -267,12 +256,12 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
         MessageRequested?.Invoke(this, new MessageRequestedEventArgs("Error", message));
     }
 
-    private void ApplyRoster(IReadOnlyList<string> users, string? adminName)
+    private void ApplyRoster(IReadOnlyList<string>? users, string? adminName)
     {
-        var currentIsAdmin = string.Equals(adminName, _currentUser, StringComparison.Ordinal);
+        bool currentIsAdmin = string.Equals(adminName, _currentUser, StringComparison.Ordinal);
 
         var entries = new List<(string Name, bool IsAdmin, bool IsCurrent)>();
-        foreach (var user in users ?? Array.Empty<string>())
+        foreach (string user in users ?? [])
         {
             bool isCurrent = string.Equals(user, _currentUser, StringComparison.Ordinal);
             bool isAdmin = string.Equals(user, adminName, StringComparison.Ordinal);
@@ -282,7 +271,7 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
         Dispatcher.UIThread.Post(() =>
         {
             _users.Clear();
-            foreach (var (name, isAdmin, isCurrent) in entries
+            foreach ((string name, bool isAdmin, bool isCurrent) in entries
                          .OrderByDescending(entry => entry.IsCurrent)
                          .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase))
             {
@@ -336,61 +325,5 @@ public class SessionLobbyViewModel : INotifyPropertyChanged, IDisposable
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    public sealed class UserEntryViewModel : INotifyPropertyChanged
-    {
-        private bool _isAdmin;
-        private bool _isCurrent;
-
-        public UserEntryViewModel(string name, bool isAdmin, bool isCurrent)
-        {
-            Name = name;
-            _isAdmin = isAdmin;
-            _isCurrent = isCurrent;
-        }
-
-        public string Name { get; }
-
-        public bool IsAdmin
-        {
-            get => _isAdmin;
-            set
-            {
-                if (_isAdmin == value)
-                {
-                    return;
-                }
-
-                _isAdmin = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(DisplayName));
-            }
-        }
-
-        public bool IsCurrent
-        {
-            get => _isCurrent;
-            set
-            {
-                if (_isCurrent == value)
-                {
-                    return;
-                }
-
-                _isCurrent = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(DisplayName));
-            }
-        }
-
-        public string DisplayName => $"{Name}{(IsCurrent ? " (You)" : string.Empty)}{(IsAdmin ? " (Admin)" : string.Empty)}";
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 }

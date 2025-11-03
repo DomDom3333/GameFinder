@@ -8,6 +8,8 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using Cookie = OpenQA.Selenium.Cookie;
 
+namespace SteamCookieFetcher;
+
 class Program
 {
     static readonly string SteamLoginUrl = "https://store.steampowered.com/login/";

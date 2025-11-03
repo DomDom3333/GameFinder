@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace GameFinder.Services
+﻿namespace GameFinderApi.Services
 {
     public class GameFilterService
     {
@@ -18,14 +14,14 @@ namespace GameFinder.Services
             var ownerCounts = new Dictionary<string, int>(StringComparer.Ordinal);
             var wishCounts = new Dictionary<string, int>(StringComparer.Ordinal);
             
-            foreach (var userId in userIds)
+            foreach (string userId in userIds)
             {
                 var owned = getUserGames(userId);
                 if (owned != null)
                 {
-                    foreach (var g in owned)
+                    foreach (string g in owned)
                     {
-                        ownerCounts[g] = ownerCounts.TryGetValue(g, out var c) ? c + 1 : 1;
+                        ownerCounts[g] = ownerCounts.TryGetValue(g, out int c) ? c + 1 : 1;
                     }
                 }
                 
@@ -34,9 +30,9 @@ namespace GameFinder.Services
                     var wished = getUserWishlists(userId);
                     if (wished != null)
                     {
-                        foreach (var g in wished)
+                        foreach (string g in wished)
                         {
-                            wishCounts[g] = wishCounts.TryGetValue(g, out var c) ? c + 1 : 1;
+                            wishCounts[g] = wishCounts.TryGetValue(g, out int c) ? c + 1 : 1;
                         }
                     }
                 }
@@ -46,7 +42,7 @@ namespace GameFinder.Services
             var candidates = new HashSet<string>(ownerCounts.Keys, StringComparer.Ordinal);
             if (includeWishlist)
             {
-                foreach (var g in wishCounts.Keys) 
+                foreach (string g in wishCounts.Keys) 
                     candidates.Add(g);
             }
 
@@ -58,14 +54,14 @@ namespace GameFinder.Services
                 // Check owners threshold if active
                 if (ownersActive)
                 {
-                    if (!ownerCounts.TryGetValue(g, out var oc) || oc < minOwners)
+                    if (!ownerCounts.TryGetValue(g, out int oc) || oc < minOwners)
                         return false; // Fails owners threshold
                 }
                 
                 // Check wishlist threshold if active
                 if (wishlistActive)
                 {
-                    if (!wishCounts.TryGetValue(g, out var wc) || wc < minWishlisted)
+                    if (!wishCounts.TryGetValue(g, out int wc) || wc < minWishlisted)
                         return false; // Fails wishlist threshold
                 }
                 

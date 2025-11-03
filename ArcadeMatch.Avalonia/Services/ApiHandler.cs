@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 using GameFinder;
 using GameFinder.Objects;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -164,14 +159,14 @@ public class ApiHandler : ISessionApi
         CurrentAdminUser = null;
     }
 
-    public async Task<IReadOnlyList<MatchedGame>> ResolveGamesAsync(IEnumerable<MatchedGameSummary> gameSummaries)
+    public async Task<IReadOnlyList<MatchedGame>> ResolveGamesAsync(IEnumerable<MatchedGameSummary>? gameSummaries)
     {
         var resolved = new List<MatchedGame>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var summary in gameSummaries ?? Enumerable.Empty<MatchedGameSummary>())
         {
-            var id = summary.Id;
+            string id = summary.Id;
             if (string.IsNullOrWhiteSpace(id) || !seen.Add(id))
                 continue;
 
@@ -183,7 +178,7 @@ public class ApiHandler : ISessionApi
 
             try
             {
-                var json = await HttpClient.GetStringAsync($"{App.Settings.Server.SteamMarketDataUrl}{id}").ConfigureAwait(false);
+                string json = await HttpClient.GetStringAsync($"{App.Settings.Server.SteamMarketDataUrl}{id}").ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(json))
                     continue;
 

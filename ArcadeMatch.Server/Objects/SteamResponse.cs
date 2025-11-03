@@ -1,12 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace GameFinder.Objects;
-
-public class SteamGameResponse
-{
-    public bool Success { get; set; }
-    public GameData Data { get; set; }
-}
+namespace GameFinderApi.Objects;
 
 public class GameData
 {

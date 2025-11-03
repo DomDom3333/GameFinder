@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace GameFinder;
+namespace GameFinderApi;
 
 public static class Misc
 {

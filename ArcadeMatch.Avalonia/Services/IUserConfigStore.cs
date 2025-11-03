@@ -1,7 +1,5 @@
-using System.Collections.Generic;
-using GameFinder.Objects;
-
 using System.ComponentModel;
+using GameFinder.Objects;
 
 namespace ArcadeMatch.Avalonia.Services;
 

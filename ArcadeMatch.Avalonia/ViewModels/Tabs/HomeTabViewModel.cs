@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using ArcadeMatch.Avalonia.Commands;
 using ArcadeMatch.Avalonia.Services;
 using OpenQA.Selenium;
 using System.Windows.Input;
+using GameFinder.Objects;
 
 namespace ArcadeMatch.Avalonia.ViewModels.Tabs;
 
@@ -142,11 +139,6 @@ public class HomeTabViewModel : INotifyPropertyChanged
         }
     }
 
-    public void UpdateSteamStatusFromSession(bool isConnected)
-    {
-        IsLoggedIn = isConnected;
-    }
-
     private async Task ExecuteLoginAsync()
     {
         try
@@ -183,8 +175,8 @@ public class HomeTabViewModel : INotifyPropertyChanged
 
     private async Task ExecuteFetchViaApiAsync()
     {
-        var trimmedApiKey = SteamApiKey.Trim();
-        var trimmedSteamId = SteamId.Trim();
+        string trimmedApiKey = SteamApiKey.Trim();
+        string trimmedSteamId = SteamId.Trim();
 
         SteamApiKey = trimmedApiKey;
         SteamId = trimmedSteamId;
@@ -211,7 +203,7 @@ public class HomeTabViewModel : INotifyPropertyChanged
     private async Task UpdateStatusAsync(IReadOnlyCollection<Cookie> cookies)
     {
         _steamGameService.ParseCookiesForData(cookies);
-        var steamId = _userConfig.SteamId;
+        string? steamId = _userConfig.SteamId;
         _userConfig.UserProfile = steamId != null
             ? await SteamProfileFetcher.GetProfileAsync(steamId)
             : null;

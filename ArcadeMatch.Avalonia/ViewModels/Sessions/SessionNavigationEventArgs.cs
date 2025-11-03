@@ -1,5 +1,3 @@
-using System;
-
 namespace ArcadeMatch.Avalonia.ViewModels.Sessions;
 
 public enum SessionViewType

@@ -1,7 +1,6 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
+
+namespace GameFinder.Objects;
 
 public class SteamProfile
 {
@@ -36,8 +35,8 @@ public static class SteamProfileFetcher
         if (string.IsNullOrWhiteSpace(steam64Id))
             throw new ArgumentException("SteamID64 cannot be null or empty.");
 
-        var url = $"https://steamcommunity.com/profiles/{steam64Id}/?xml=1";
-        var xml = await _client.GetStringAsync(url);
+        string url = $"https://steamcommunity.com/profiles/{steam64Id}/?xml=1";
+        string xml = await _client.GetStringAsync(url);
 
         var doc = XDocument.Parse(xml);
         var profile = doc.Element("profile");

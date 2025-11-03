@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using GameFinder.Services;
+using GameFinderApi.Services;
 using Microsoft.AspNetCore.SignalR;
 
 namespace GameFinderApi;
@@ -43,7 +43,7 @@ public class MatchingHub : Hub
                     }
 
                     session.MatchedGames.Clear();
-                    foreach (var (gameId, swipes) in session.GameSwipes)
+                    foreach ((string gameId, var swipes) in session.GameSwipes)
                     {
                         bool allRight = session.Users.All(id => swipes.TryGetValue(id, out bool right) && right);
                         if (allRight)
@@ -130,7 +130,7 @@ public class MatchingHub : Hub
             // Add the connection to the group immediately.
             await Groups.AddToGroupAsync(Context.ConnectionId, sessionCode);
 
-            var (roster, adminUsername) = BuildSessionSnapshot(sessionCode, session);
+            (var roster, string? adminUsername) = BuildSessionSnapshot(sessionCode, session);
             await Clients.Client(Context.ConnectionId).SendAsync("SessionState", roster, adminUsername);
 
             // Notify the caller about their join and also notify the group about the new user.
@@ -164,7 +164,7 @@ public class MatchingHub : Hub
 
                 // Recalculate matched games
                 session.MatchedGames.Clear();
-                foreach (var (gameId, swipes) in session.GameSwipes)
+                foreach ((string gameId, var swipes) in session.GameSwipes)
                 {
                     bool allRight = session.Users.All(id => swipes.TryGetValue(id, out bool right) && right);
                     if (allRight)
@@ -330,7 +330,7 @@ public class MatchingHub : Hub
         var roster = new List<string>();
         var staleConnections = new List<string>();
 
-        foreach (var connectionId in session.Users)
+        foreach (string connectionId in session.Users)
         {
             if (ConnectionUserMapping.TryGetValue(connectionId, out string username))
             {
@@ -344,7 +344,7 @@ public class MatchingHub : Hub
 
         if (staleConnections.Count > 0)
         {
-            foreach (var stale in staleConnections)
+            foreach (string stale in staleConnections)
             {
                 session.Users.Remove(stale);
             }
@@ -368,7 +368,7 @@ public class MatchingHub : Hub
 
     private async Task BroadcastSessionStateAsync(string sessionCode, Session session)
     {
-        var (roster, adminUsername) = BuildSessionSnapshot(sessionCode, session);
+        (var roster, string? adminUsername) = BuildSessionSnapshot(sessionCode, session);
         await Clients.Group(sessionCode).SendAsync("SessionState", roster, adminUsername);
     }
 

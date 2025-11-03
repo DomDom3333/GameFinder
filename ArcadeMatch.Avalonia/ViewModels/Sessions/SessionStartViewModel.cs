@@ -1,12 +1,8 @@
-using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using ArcadeMatch.Avalonia.Commands;
 using ArcadeMatch.Avalonia.Services;
-using ArcadeMatch.Avalonia.ViewModels;
 
 namespace ArcadeMatch.Avalonia.ViewModels.Sessions;
 
@@ -16,7 +12,6 @@ public class SessionStartViewModel : INotifyPropertyChanged, IDisposable
     private readonly IUserConfigStore _userConfig;
 
     private string _displayName;
-    private string _sessionCode = string.Empty;
 
     public SessionStartViewModel(ISessionApi sessionApi, IUserConfigStore userConfig)
     {
@@ -59,18 +54,18 @@ public class SessionStartViewModel : INotifyPropertyChanged, IDisposable
 
     public string SessionCode
     {
-        get => _sessionCode;
+        get;
         set
         {
-            if (_sessionCode == value)
+            if (field == value)
             {
                 return;
             }
 
-            _sessionCode = value ?? string.Empty;
+            field = value ?? string.Empty;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public async Task ExecuteStartNewSessionAsync(CancellationToken cancellationToken = default)
     {

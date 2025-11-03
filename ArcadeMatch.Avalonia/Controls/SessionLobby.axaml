@@ -37,7 +37,7 @@
                 MinHeight="120"
                 SelectionMode="Single">
                 <ListBox.ItemTemplate>
-                    <DataTemplate x:DataType="sessionVm:SessionLobbyViewModel+UserEntryViewModel">
+                    <DataTemplate x:DataType="sessionVm:UserEntryViewModel">
                         <TextBlock Margin="5" Text="{Binding DisplayName}" />
                     </DataTemplate>
                 </ListBox.ItemTemplate>

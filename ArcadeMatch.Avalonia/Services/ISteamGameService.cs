@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using OpenQA.Selenium;
 
 namespace ArcadeMatch.Avalonia.Services;

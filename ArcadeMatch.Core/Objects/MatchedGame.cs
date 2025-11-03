@@ -16,15 +16,15 @@ public record MatchedGame(string Id, GameData Data, int Likes, int TotalParticip
             {
                 if (Likes >= TotalParticipants)
                 {
-                    var playerWord = TotalParticipants == 1 ? "player" : "players";
+                    string playerWord = TotalParticipants == 1 ? "player" : "players";
                     return $"❤️ Liked by all {TotalParticipants} {playerWord}";
                 }
 
-                var likedWord = Likes == 1 ? "player" : "players";
+                string likedWord = Likes == 1 ? "player" : "players";
                 return $"❤️ Liked by {Likes} of {TotalParticipants} {likedWord}";
             }
 
-            var fallbackWord = Likes == 1 ? "player" : "players";
+            string fallbackWord = Likes == 1 ? "player" : "players";
             return $"❤️ Liked by {Likes} {fallbackWord}";
         }
     }

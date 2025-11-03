@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using System.Threading.Tasks;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using ArcadeMatch.Avalonia.ViewModels;
@@ -13,8 +12,6 @@ public partial class Tabs : UserControl
 
     public Tabs()
     {
-        // Create and assign ViewModel before InitializeComponent so EndInit (triggered by XAML loader)
-        // can safely access it.
         _viewModel = new TabsViewModel(App.SteamGameService, App.UserConfig, App.Api, App.Settings);
         DataContext = _viewModel;
         _viewModel.Home.MessageRequested += OnMessageRequested;
@@ -26,7 +23,7 @@ public partial class Tabs : UserControl
     public override async void EndInit()
     {
         base.EndInit();
-        var vm = _viewModel ?? DataContext as TabsViewModel;
+        var vm = _viewModel;
         if (vm != null)
         {
             await vm.InitializeAsync();

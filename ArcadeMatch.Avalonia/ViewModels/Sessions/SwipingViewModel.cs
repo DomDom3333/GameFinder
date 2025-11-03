@@ -1,18 +1,11 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using ArcadeMatch.Avalonia.Commands;
 using ArcadeMatch.Avalonia.Services;
 using ArcadeMatch.Avalonia.Shared;
-using ArcadeMatch.Avalonia.ViewModels;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using GameFinder;
@@ -33,21 +26,12 @@ public class SwipingViewModel : INotifyPropertyChanged, IDisposable
     private GameData? _nextGameData;
     private string? _nextGameId;
     private readonly HashSet<string> _seenGameIds = new(StringComparer.Ordinal);
-    private bool _isInteractionEnabled = true;
-
-    private string _gameName = string.Empty;
-    private string _description = string.Empty;
-    private Bitmap? _gameImage;
-    private string _genres = string.Empty;
-    private string _languages = string.Empty;
-    private string _developers = string.Empty;
-    private string _releaseDate = string.Empty;
-    private string _price = string.Empty;
-    private string _metacritic = string.Empty;
-    private string _reviews = string.Empty;
 
     private readonly AsyncCommand _likeCommand;
     private readonly AsyncCommand _dislikeCommand;
+
+    // Disposal state flag
+    private bool _disposed;
 
     public SwipingViewModel(ISessionApi sessionApi, IUserConfigStore userConfig, ApiSettings settings)
     {
@@ -76,170 +60,170 @@ public class SwipingViewModel : INotifyPropertyChanged, IDisposable
 
     public bool IsInteractionEnabled
     {
-        get => _isInteractionEnabled;
+        get;
         private set
         {
-            if (_isInteractionEnabled == value)
+            if (field == value)
             {
                 return;
             }
 
-            _isInteractionEnabled = value;
+            field = value;
             OnPropertyChanged();
             _likeCommand.RaiseCanExecuteChanged();
             _dislikeCommand.RaiseCanExecuteChanged();
         }
-    }
+    } = true;
 
     public string GameName
     {
-        get => _gameName;
+        get;
         private set
         {
-            if (_gameName == value)
+            if (field == value)
             {
                 return;
             }
 
-            _gameName = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public string Description
     {
-        get => _description;
+        get;
         private set
         {
-            if (_description == value)
+            if (field == value)
             {
                 return;
             }
 
-            _description = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public Bitmap? GameImage
     {
-        get => _gameImage;
+        get;
         private set
         {
-            if (Equals(_gameImage, value))
+            if (Equals(field, value))
             {
                 return;
             }
 
-            _gameImage = value;
+            field = value;
             OnPropertyChanged();
         }
     }
 
     public string Genres
     {
-        get => _genres;
+        get;
         private set
         {
-            if (_genres == value)
+            if (field == value)
             {
                 return;
             }
 
-            _genres = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public string Languages
     {
-        get => _languages;
+        get;
         private set
         {
-            if (_languages == value)
+            if (field == value)
             {
                 return;
             }
 
-            _languages = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public string Developers
     {
-        get => _developers;
+        get;
         private set
         {
-            if (_developers == value)
+            if (field == value)
             {
                 return;
             }
 
-            _developers = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public string ReleaseDate
     {
-        get => _releaseDate;
+        get;
         private set
         {
-            if (_releaseDate == value)
+            if (field == value)
             {
                 return;
             }
 
-            _releaseDate = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public string Price
     {
-        get => _price;
+        get;
         private set
         {
-            if (_price == value)
+            if (field == value)
             {
                 return;
             }
 
-            _price = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public string Metacritic
     {
-        get => _metacritic;
+        get;
         private set
         {
-            if (_metacritic == value)
+            if (field == value)
             {
                 return;
             }
 
-            _metacritic = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public string Reviews
     {
-        get => _reviews;
+        get;
         private set
         {
-            if (_reviews == value)
+            if (field == value)
             {
                 return;
             }
 
-            _reviews = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = string.Empty;
 
     public async Task InitializeAsync()
     {
@@ -253,25 +237,46 @@ public class SwipingViewModel : INotifyPropertyChanged, IDisposable
         await LoadFirstGameAsync().ConfigureAwait(false);
     }
 
+    #region IDisposable
+    ~SwipingViewModel()
+    {
+        Dispose(false);
+    }
+
     public void Dispose()
     {
-        _sessionApi.GameMatched -= OnGameMatched;
-        _sessionApi.SessionEnded -= OnSessionEnded;
-        _sessionApi.ErrorOccurred -= OnErrorOccurred;
-        _httpClient.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+
+        if (disposing)
+        {
+            // Unsubscribe from events and dispose managed resources
+            _sessionApi.GameMatched -= OnGameMatched;
+            _sessionApi.SessionEnded -= OnSessionEnded;
+            _sessionApi.ErrorOccurred -= OnErrorOccurred;
+            _httpClient.Dispose();
+        }
+
+        _disposed = true;
+    }
+    #endregion
 
     private async Task LoadFirstGameAsync()
     {
         await Dispatcher.UIThread.InvokeAsync(() => IsInteractionEnabled = false);
-        (var gameData, var gameId) = await PreloadNextGameDetailsAsync().ConfigureAwait(false);
+        (var gameData, string? gameId) = await PreloadNextGameDetailsAsync().ConfigureAwait(false);
         _currentGameData = gameData;
         _currentGameId = gameId;
 
         if (_currentGameData != null && _currentGameId != null)
         {
             await DisplayGameDetailsAsync(_currentGameData).ConfigureAwait(false);
-            ( _nextGameData, _nextGameId ) = await PreloadNextGameDetailsAsync().ConfigureAwait(false);
+            (_nextGameData, _nextGameId) = await PreloadNextGameDetailsAsync().ConfigureAwait(false);
             await Dispatcher.UIThread.InvokeAsync(() => IsInteractionEnabled = true);
         }
         else if (!string.IsNullOrWhiteSpace(_sessionApi.SessionId))
@@ -284,7 +289,7 @@ public class SwipingViewModel : INotifyPropertyChanged, IDisposable
     {
         while (_gameQueue.Count > 0)
         {
-            var gameId = _gameQueue.Dequeue();
+            string gameId = _gameQueue.Dequeue();
             if (!_seenGameIds.Add(gameId))
             {
                 continue;
@@ -295,10 +300,10 @@ public class SwipingViewModel : INotifyPropertyChanged, IDisposable
                 return (cached, gameId);
             }
 
-            var apiUrl = $"{_settings.Server.SteamMarketDataUrl}{gameId}";
+            string apiUrl = $"{_settings.Server.SteamMarketDataUrl}{gameId}";
             try
             {
-                var jsonData = await _httpClient.GetStringAsync(apiUrl).ConfigureAwait(false);
+                string jsonData = await _httpClient.GetStringAsync(apiUrl).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(jsonData))
                 {
                     continue;
@@ -324,13 +329,13 @@ public class SwipingViewModel : INotifyPropertyChanged, IDisposable
 
     private async Task DisplayGameDetailsAsync(GameData game)
     {
-        var genres = string.Join(", ", game.Genres.Select(g => g.Description));
-        var languages = game.SupportedLanguages?.Replace(",", ", ") ?? string.Empty;
-        var releaseDate = game.ReleaseDate?.Date ?? "Unknown";
-        var developers = game.Developers != null ? string.Join(", ", game.Developers) : string.Empty;
-        var price = game.PriceOverview?.FinalFormatted ?? "Free";
-        var metacritic = game.Metacritic != null ? $"{game.Metacritic.Score}/100" : "N/A";
-        var reviews = game.ReviewSummary != null
+        string genres = string.Join(", ", game.Genres.Select(g => g.Description));
+        string languages = game.SupportedLanguages?.Replace(",", ", ") ?? string.Empty;
+        string releaseDate = game.ReleaseDate?.Date ?? "Unknown";
+        string developers = game.Developers != null ? string.Join(", ", game.Developers) : string.Empty;
+        string price = game.PriceOverview?.FinalFormatted ?? "Free";
+        string metacritic = game.Metacritic != null ? $"{game.Metacritic.Score}/100" : "N/A";
+        string reviews = game.ReviewSummary != null
             ? $"{game.ReviewSummary.ReviewScoreDesc} ({game.ReviewSummary.TotalReviews} reviews)"
             : "No reviews";
 
@@ -352,7 +357,7 @@ public class SwipingViewModel : INotifyPropertyChanged, IDisposable
         {
             try
             {
-                var bytes = await _httpClient.GetByteArrayAsync(game.HeaderImage).ConfigureAwait(false);
+                byte[] bytes = await _httpClient.GetByteArrayAsync(game.HeaderImage).ConfigureAwait(false);
                 await using var ms = new MemoryStream(bytes);
                 var bitmap = new Bitmap(ms);
                 Dispatcher.UIThread.Post(() => GameImage = bitmap);
@@ -414,7 +419,7 @@ public class SwipingViewModel : INotifyPropertyChanged, IDisposable
     {
         try
         {
-            var totalPlayers = _sessionApi.SessionRoster.Count;
+            int totalPlayers = _sessionApi.SessionRoster.Count;
             var match = await _sessionApi.ResolveGameAsync(gameId, totalPlayers, totalPlayers).ConfigureAwait(false);
             string displayName = match?.Data.Name ?? gameId;
             string likesDisplay = match?.LikesDisplay ?? "Everyone liked this pick!";

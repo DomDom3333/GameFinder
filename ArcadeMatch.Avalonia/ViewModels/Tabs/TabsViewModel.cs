@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using ArcadeMatch.Avalonia.Services;
 using ArcadeMatch.Avalonia.Shared;
-using ArcadeMatch.Avalonia.ViewModels;
 using ArcadeMatch.Avalonia.ViewModels.Sessions;
 using Avalonia.Threading;
 
@@ -13,29 +9,22 @@ namespace ArcadeMatch.Avalonia.ViewModels.Tabs;
 
 public class TabsViewModel : INotifyPropertyChanged
 {
-    private readonly SessionStartViewModel _sessionStart;
-    private readonly SessionLobbyViewModel _sessionLobby;
-    private readonly SwipingViewModel _swiping;
-    private readonly MatchResultViewModel _matchResult;
-
-    private object? _selectedSession;
-
     public TabsViewModel(ISteamGameService steamGameService, IUserConfigStore userConfig, ISessionApi sessionApi, ApiSettings settings)
     {
         Home = new HomeTabViewModel(steamGameService, userConfig);
-        _sessionStart = new SessionStartViewModel(sessionApi, userConfig);
-        _sessionLobby = new SessionLobbyViewModel(sessionApi, userConfig);
-        _swiping = new SwipingViewModel(sessionApi, userConfig, settings);
-        _matchResult = new MatchResultViewModel();
+        SessionStart = new SessionStartViewModel(sessionApi, userConfig);
+        SessionLobby = new SessionLobbyViewModel(sessionApi, userConfig);
+        Swiping = new SwipingViewModel(sessionApi, userConfig, settings);
+        MatchResult = new MatchResultViewModel();
 
-        SubscribeToMessages(_sessionStart, _sessionLobby, _swiping);
-        _matchResult.NavigationRequested += OnNavigationRequested;
+        SubscribeToMessages(SessionStart, SessionLobby, Swiping);
+        MatchResult.NavigationRequested += OnNavigationRequested;
 
-        _sessionStart.NavigationRequested += OnNavigationRequested;
-        _sessionLobby.NavigationRequested += OnNavigationRequested;
-        _swiping.NavigationRequested += OnNavigationRequested;
+        SessionStart.NavigationRequested += OnNavigationRequested;
+        SessionLobby.NavigationRequested += OnNavigationRequested;
+        Swiping.NavigationRequested += OnNavigationRequested;
 
-        SelectedSession = _sessionStart;
+        SelectedSession = SessionStart;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -43,27 +32,28 @@ public class TabsViewModel : INotifyPropertyChanged
 
     public HomeTabViewModel Home { get; }
 
-    public SessionStartViewModel SessionStart => _sessionStart;
-    public SessionLobbyViewModel SessionLobby => _sessionLobby;
-    public SwipingViewModel Swiping => _swiping;
-    public MatchResultViewModel MatchResult => _matchResult;
+    private SessionStartViewModel SessionStart { get; }
+
+    private SessionLobbyViewModel SessionLobby { get; }
+
+    private SwipingViewModel Swiping { get; }
+
+    private MatchResultViewModel MatchResult { get; }
 
     public object? SelectedSession
     {
-        get => _selectedSession;
+        get;
         private set
         {
-            if (ReferenceEquals(_selectedSession, value))
+            if (ReferenceEquals(field, value))
             {
                 return;
             }
 
-            _selectedSession = value;
+            field = value;
             OnPropertyChanged();
         }
     }
-
-    public void UpdateSteamStatusFromSession(bool isConnected) => Home.UpdateSteamStatusFromSession(isConnected);
 
     public async Task InitializeAsync()
     {
@@ -80,29 +70,29 @@ public class TabsViewModel : INotifyPropertyChanged
         switch (e.Destination)
         {
             case SessionViewType.Start:
-                SelectedSession = _sessionStart;
+                SelectedSession = SessionStart;
                 break;
             case SessionViewType.Lobby:
-                _sessionLobby.Activate();
-                SelectedSession = _sessionLobby;
+                SessionLobby.Activate();
+                SelectedSession = SessionLobby;
                 break;
             case SessionViewType.Swiping:
-                _ = _swiping.InitializeAsync();
-                SelectedSession = _swiping;
+                _ = Swiping.InitializeAsync();
+                SelectedSession = Swiping;
                 break;
             case SessionViewType.Results:
                 if (e.Parameter is IReadOnlyList<GameFinder.Objects.MatchedGame> matches)
                 {
-                    _ = _matchResult.LoadMatchesAsync(matches);
+                    _ = MatchResult.LoadMatchesAsync(matches);
                 }
-                SelectedSession = _matchResult;
+                SelectedSession = MatchResult;
                 break;
         }
     }
 
     private void SubscribeToMessages(params object[] viewModels)
     {
-        foreach (var vm in viewModels)
+        foreach (object vm in viewModels)
         {
             if (vm is SessionStartViewModel start)
             {

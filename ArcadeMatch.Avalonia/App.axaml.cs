@@ -1,15 +1,13 @@
-using System;
-using System.Threading.Tasks;
+using ArcadeMatch.Avalonia.Services;
+using ArcadeMatch.Avalonia.Shared;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using ArcadeMatch.Avalonia.Services;
-using ArcadeMatch.Avalonia.Shared;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ArcadeMatch.Avalonia;
 
-public partial class App : Application
+public class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
     public static ISessionApi Api { get; private set; } = null!;

@@ -1,16 +1,11 @@
-using System;
+using System.Collections.Concurrent;
 using System.Text.Json;
-using System.Threading.Tasks;
-using GameFinder.Objects;
-using GameFinder;
+using System.Threading.RateLimiting;
+using GameFinderApi.Objects;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
-using System.Threading;
-using System.Collections.Concurrent;
-using System.Threading.RateLimiting;
 
-namespace GameFinder.Controllers
+namespace GameFinderApi.Controllers
 {
     [ApiController]
     [Route("[controller]/{id}")]

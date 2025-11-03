@@ -1,7 +1,7 @@
 using System.Text.Json;
-using GameFinder.Objects;
+using GameFinderApi.Objects;
 
-namespace GameFinder;
+namespace GameFinderApi;
 
 public static class GameDataCache
 {
