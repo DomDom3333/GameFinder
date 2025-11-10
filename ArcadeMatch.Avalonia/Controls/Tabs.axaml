@@ -30,21 +30,31 @@
     <TabControl>
         <TabItem Header="Home">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="20">
-                    <TextBlock
-                        FontSize="20"
-                        FontWeight="Bold"
-                        HorizontalAlignment="Center"
-                        Margin="0,0,0,10"
-                        Text="Steam Authentication" />
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="1️⃣ Click the login button below" />
-                        <TextBlock Text="2️⃣ Complete Steam authentication in browser" />
-                        <TextBlock Text="3️⃣ Click refresh to verify login status" />
-                        <TextBlock Text="4️⃣ Keep browser open until verification is complete" />
+                <StackPanel Margin="20" Spacing="20">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontSize="20"
+                            FontWeight="Bold"
+                            HorizontalAlignment="Center"
+                            Text="Steam Authentication" />
+                        <TextBlock
+                            FontWeight="Bold"
+                            Text="Recommended: Use Steam API credentials" />
+                        <TextBlock
+                            Text="Provide your Steam API key and Steam ID to fetch your library without launching a browser." />
                     </StackPanel>
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Margin="0,0,0,10" Text="🔐 Authentication Status" />
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="🔐 Steam API Key" />
+                        <TextBox Text="{Binding Home.SteamApiKey, Mode=TwoWay}" />
+                        <TextBlock Text="🆔 Steam ID" />
+                        <TextBox Text="{Binding Home.SteamId, Mode=TwoWay}" />
+                        <Button
+                            Command="{Binding Home.FetchViaApiCommand}"
+                            Content="🔄 Fetch via API"
+                            HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Spacing="8">
+                        <TextBlock Margin="0,0,0,2" Text="🔐 Authentication Status" />
                         <Border
                             Background="{Binding Home.IsLoggedIn, Converter={StaticResource IsLoggedInToBrushConverter}}"
                             CornerRadius="15"
@@ -63,13 +73,23 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                    <StackPanel
-                        HorizontalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="10">
-                        <Button Command="{Binding Home.LoginCommand}" Content="🔑 Login to Steam" />
-                        <Button Command="{Binding Home.RefreshCommand}" Content="🔄 Refresh Status" />
-                    </StackPanel>
+                    <Expander Header="Advanced: Use web login (not recommended)" IsExpanded="False">
+                        <StackPanel Margin="10,5,0,0" Spacing="10">
+                            <StackPanel>
+                                <TextBlock Text="1️⃣ Click the login button below" />
+                                <TextBlock Text="2️⃣ Complete Steam authentication in browser" />
+                                <TextBlock Text="3️⃣ Click refresh to verify login status" />
+                                <TextBlock Text="4️⃣ Keep browser open until verification is complete" />
+                            </StackPanel>
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="10">
+                                <Button Command="{Binding Home.LoginCommand}" Content="🔑 Login to Steam" />
+                                <Button Command="{Binding Home.RefreshCommand}" Content="🔄 Refresh Status" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Expander>
                 </StackPanel>
             </ScrollViewer>
         </TabItem>
