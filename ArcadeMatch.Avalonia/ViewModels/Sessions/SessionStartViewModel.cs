@@ -86,7 +86,8 @@ public class SessionStartViewModel : INotifyPropertyChanged, IDisposable
             _sessionApi.SessionId!,
             DisplayName,
             _userConfig.GameList,
-            _userConfig.WishlistGames).ConfigureAwait(false);
+            _userConfig.WishlistGames,
+            _userConfig.SteamId).ConfigureAwait(false);
 
         OnNavigationRequested(SessionViewType.Lobby);
     }
@@ -109,7 +110,8 @@ public class SessionStartViewModel : INotifyPropertyChanged, IDisposable
             SessionCode,
             DisplayName,
             _userConfig.GameList,
-            _userConfig.WishlistGames).ConfigureAwait(false);
+            _userConfig.WishlistGames,
+            _userConfig.SteamId).ConfigureAwait(false);
 
         OnNavigationRequested(SessionViewType.Lobby);
     }

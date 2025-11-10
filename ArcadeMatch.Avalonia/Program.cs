@@ -27,11 +27,16 @@ static class Program
     private static IServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
+        services.AddMemoryCache();
         services.AddSingleton<ApiSettings>(_ => ApiSettings.Load());
         services.AddSingleton<IUserConfigStore, UserConfigStore>();
         services.AddSingleton<ISteamGameService, SteamGameService>();
         services.AddSingleton<ISessionApi, ApiHandler>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<SteamFriendCache>();
+        services.AddSingleton<CookieSteamFriendsProvider>();
+        services.AddSingleton<ApiSteamFriendsProvider>();
+        services.AddSingleton<FriendsService>();
         return services.BuildServiceProvider();
     }
 }

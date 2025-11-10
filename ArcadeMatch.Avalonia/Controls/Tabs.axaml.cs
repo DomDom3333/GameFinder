@@ -12,7 +12,7 @@ public partial class Tabs : UserControl
 
     public Tabs()
     {
-        _viewModel = new TabsViewModel(App.SteamGameService, App.UserConfig, App.Api, App.Settings);
+        _viewModel = new TabsViewModel(App.SteamGameService, App.UserConfig, App.Api, App.Settings, App.FriendsService);
         DataContext = _viewModel;
         _viewModel.Home.MessageRequested += OnMessageRequested;
         _viewModel.MessageRequested += OnMessageRequested;

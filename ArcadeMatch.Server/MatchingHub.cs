@@ -22,9 +22,20 @@ public class MatchingHub : Hub
     // Add a mapping between ConnectionId and Username
     private static readonly ConcurrentDictionary<string, string> ConnectionUserMapping = new();
 
+    private static readonly ConcurrentDictionary<string, string> ConnectionSteamMapping = new();
+    private static readonly ConcurrentDictionary<string, string> SteamConnectionMapping = new();
+    private static readonly ConcurrentDictionary<string, string> SteamSessionMapping = new();
+
     // 2. Remove user mapping and update admin on disconnect/leave
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        string? steamId = null;
+        if (ConnectionSteamMapping.TryRemove(Context.ConnectionId, out string removedSteamId))
+        {
+            steamId = removedSteamId;
+            SteamConnectionMapping.TryRemove(removedSteamId, out _);
+        }
+
         if (ConnectionUserMapping.TryRemove(Context.ConnectionId, out string username))
         {
             foreach (var kvp in Sessions)
@@ -33,6 +44,11 @@ public class MatchingHub : Hub
                 Session session = kvp.Value;
                 if (session.Users.Remove(Context.ConnectionId))
                 {
+                    if (!string.IsNullOrWhiteSpace(steamId))
+                    {
+                        SteamSessionMapping.TryRemove(steamId, out _);
+                    }
+
                     UserGames.TryRemove(Context.ConnectionId, out _);
                     UserWishlists.TryRemove(Context.ConnectionId, out _);
                     await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
@@ -102,7 +118,7 @@ public class MatchingHub : Hub
         Console.WriteLine($"Session created with code: {sessionCode}");
     }
 
-    public async Task JoinSession(string sessionCode, string username, List<string> gameList, List<string> wishlist)
+    public async Task JoinSession(string sessionCode, string username, string? steamId, List<string> gameList, List<string> wishlist)
     {
         if (Sessions.TryGetValue(sessionCode, out Session? session))
         {
@@ -119,6 +135,12 @@ public class MatchingHub : Hub
             }
             // Store the mapping: connection id to username
             ConnectionUserMapping[Context.ConnectionId] = username;
+            if (!string.IsNullOrWhiteSpace(steamId))
+            {
+                ConnectionSteamMapping[Context.ConnectionId] = steamId;
+                SteamConnectionMapping[steamId] = Context.ConnectionId;
+                SteamSessionMapping[steamId] = sessionCode;
+            }
             session.Users.Add(Context.ConnectionId);
 
             // Store user's game list and wishlist
@@ -148,12 +170,23 @@ public class MatchingHub : Hub
     {
         if (Sessions.TryGetValue(sessionCode, out Session? session))
         {
+            string? steamId = null;
+            if (ConnectionSteamMapping.TryRemove(Context.ConnectionId, out string removedSteamId))
+            {
+                steamId = removedSteamId;
+                SteamConnectionMapping.TryRemove(removedSteamId, out _);
+            }
+
             // Remove mapping
             ConnectionUserMapping.TryRemove(Context.ConnectionId, out _);
             if (UserGames.TryRemove(Context.ConnectionId, out _))
             {
                 UserWishlists.TryRemove(Context.ConnectionId, out _);
                 session.Users.Remove(Context.ConnectionId);
+                if (!string.IsNullOrWhiteSpace(steamId))
+                {
+                    SteamSessionMapping.TryRemove(steamId, out _);
+                }
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionCode);
 
                 // Remove user swipes from all games
@@ -318,6 +351,55 @@ public class MatchingHub : Hub
         }
     }
 
+    public Task<Dictionary<string, string>> GetFriendsSessions(List<string> steamIds)
+    {
+        steamIds ??= new List<string>();
+        var activeSessions = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (string steamId in steamIds)
+        {
+            if (string.IsNullOrWhiteSpace(steamId))
+            {
+                continue;
+            }
+
+            if (SteamSessionMapping.TryGetValue(steamId, out string? sessionCode))
+            {
+                activeSessions[steamId] = sessionCode;
+            }
+        }
+
+        return Task.FromResult(activeSessions);
+    }
+
+    public async Task InviteFriend(string steamId)
+    {
+        if (string.IsNullOrWhiteSpace(steamId))
+        {
+            return;
+        }
+
+        if (!ConnectionUserMapping.TryGetValue(Context.ConnectionId, out string? inviter))
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("Error", "Join a session before sending invites.");
+            return;
+        }
+
+        string? sessionCode = FindSessionCodeForConnection(Context.ConnectionId);
+        if (string.IsNullOrWhiteSpace(sessionCode))
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("Error", "Join a session before sending invites.");
+            return;
+        }
+
+        if (!SteamConnectionMapping.TryGetValue(steamId, out string? friendConnectionId))
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("Error", "Friend is not connected to ArcadeMatch.");
+            return;
+        }
+
+        await Clients.Client(friendConnectionId).SendAsync("InviteReceived", sessionCode, inviter);
+    }
+
     private string GenerateSessionCode()
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -391,6 +473,19 @@ public class MatchingHub : Hub
         {
             Admins.TryRemove(sessionCode, out _);
         }
+    }
+
+    private static string? FindSessionCodeForConnection(string connectionId)
+    {
+        foreach ((string code, Session session) in Sessions)
+        {
+            if (session.Users.Contains(connectionId))
+            {
+                return code;
+            }
+        }
+
+        return null;
     }
 }
 

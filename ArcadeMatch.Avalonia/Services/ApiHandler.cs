@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Linq;
 using GameFinder;
 using GameFinder.Objects;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -27,6 +28,7 @@ public class ApiHandler : ISessionApi
     public event Action<string>? ErrorOccurred;
     public event Action<IReadOnlyList<MatchedGame>>? SessionEnded;
     public event Action<IReadOnlyList<string>, string?>? SessionStateReceived;
+    public event Action<string, string>? InviteReceived;
 
     public ApiHandler(IUserConfigStore configStore)
     {
@@ -112,6 +114,7 @@ public class ApiHandler : ISessionApi
             SessionEnded?.Invoke(resolved);
         });
         connection.On<string>("Error", msg => ErrorOccurred?.Invoke(msg));
+        connection.On<string, string>("InviteReceived", (sessionCode, inviter) => InviteReceived?.Invoke(sessionCode, inviter));
     }
 
     public async Task CreateSessionAsync()
@@ -119,12 +122,19 @@ public class ApiHandler : ISessionApi
         if (Connection != null) await Connection.InvokeAsync("CreateSession");
     }
 
-    public async Task JoinSessionAsync(string sessionCode, string username, IEnumerable<string> gameList, IEnumerable<string> wishlist)
+    public async Task JoinSessionAsync(
+        string sessionCode,
+        string username,
+        IEnumerable<string> gameList,
+        IEnumerable<string> wishlist,
+        string? steamId = null)
     {
         SessionId = sessionCode;
         _currentUser = username;
         if (Connection != null)
-            await Connection.InvokeAsync("JoinSession", sessionCode, username, gameList, wishlist);
+        {
+            await Connection.InvokeAsync("JoinSession", sessionCode, username, steamId, gameList, wishlist);
+        }
     }
 
     public async Task LeaveSessionAsync(string username)
@@ -212,5 +222,34 @@ public class ApiHandler : ISessionApi
 
         var games = await ResolveGamesAsync(new[] { new MatchedGameSummary(gameId, likes, totalParticipants) }).ConfigureAwait(false);
         return games.FirstOrDefault();
+    }
+
+    public async Task<IDictionary<string, string>> GetFriendsSessionsAsync(IEnumerable<string> friendSteamIds)
+    {
+        if (Connection == null)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        try
+        {
+            return await Connection
+                .InvokeAsync<Dictionary<string, string>>("GetFriendsSessions", friendSteamIds.ToList())
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            return new Dictionary<string, string>();
+        }
+    }
+
+    public async Task InviteFriendAsync(string friendSteamId)
+    {
+        if (Connection == null)
+        {
+            return;
+        }
+
+        await Connection.InvokeAsync("InviteFriend", friendSteamId).ConfigureAwait(false);
     }
 }
