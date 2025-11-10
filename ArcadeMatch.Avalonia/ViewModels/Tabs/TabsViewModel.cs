@@ -9,16 +9,23 @@ namespace ArcadeMatch.Avalonia.ViewModels.Tabs;
 
 public class TabsViewModel : INotifyPropertyChanged
 {
-    public TabsViewModel(ISteamGameService steamGameService, IUserConfigStore userConfig, ISessionApi sessionApi, ApiSettings settings)
+    public TabsViewModel(
+        ISteamGameService steamGameService,
+        IUserConfigStore userConfig,
+        ISessionApi sessionApi,
+        ApiSettings settings,
+        FriendsService friendsService)
     {
         Home = new HomeTabViewModel(steamGameService, userConfig);
         Settings = new SettingsTabViewModel(Home);
+        Friends = new FriendsTabViewModel(friendsService, userConfig, sessionApi);
         SessionStart = new SessionStartViewModel(sessionApi, userConfig);
         SessionLobby = new SessionLobbyViewModel(sessionApi, userConfig);
         Swiping = new SwipingViewModel(sessionApi, userConfig, settings);
         MatchResult = new MatchResultViewModel();
 
         SubscribeToMessages(SessionStart, SessionLobby, Swiping);
+        Friends.MessageRequested += (_, e) => MessageRequested?.Invoke(this, e);
         MatchResult.NavigationRequested += OnNavigationRequested;
 
         SessionStart.NavigationRequested += OnNavigationRequested;
@@ -34,6 +41,8 @@ public class TabsViewModel : INotifyPropertyChanged
     public HomeTabViewModel Home { get; }
 
     public SettingsTabViewModel Settings { get; }
+
+    public FriendsTabViewModel Friends { get; }
 
     private SessionStartViewModel SessionStart { get; }
 
@@ -61,6 +70,7 @@ public class TabsViewModel : INotifyPropertyChanged
     public async Task InitializeAsync()
     {
         await Home.InitializeAsync().ConfigureAwait(false);
+        await Friends.InitializeAsync().ConfigureAwait(false);
     }
 
     private void OnNavigationRequested(object? sender, SessionNavigationEventArgs e)

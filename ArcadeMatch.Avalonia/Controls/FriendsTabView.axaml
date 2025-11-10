@@ -1,0 +1,66 @@
+<UserControl
+    x:Class="ArcadeMatch.Avalonia.Controls.FriendsTabView"
+    x:DataType="vm:FriendsTabViewModel"
+    x:Name="Root"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:converters="clr-namespace:ArcadeMatch.Avalonia.Converters"
+    xmlns:objects="clr-namespace:GameFinder.Objects;assembly=ArcadeMatch.Core"
+    xmlns:vm="clr-namespace:ArcadeMatch.Avalonia.ViewModels.Tabs"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <converters:BooleanToBrushConverter x:Key="BooleanToBrushConverter" />
+        <converters:StringNullOrEmptyToBoolConverter x:Key="StringNullOrEmptyToBoolConverter" />
+    </UserControl.Resources>
+    <Grid RowDefinitions="Auto,Auto,*" Margin="16" RowSpacing="12">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Refresh" Command="{Binding RefreshCommand}" />
+            <TextBlock Text="Friends are fetched using your Steam API key when available, otherwise cookies." />
+        </StackPanel>
+        <TextBlock
+            Grid.Row="1"
+            Foreground="Gray"
+            IsVisible="{Binding StatusMessage, Converter={StaticResource StringNullOrEmptyToBoolConverter}}"
+            Text="{Binding StatusMessage}" />
+        <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" CornerRadius="6" Padding="8">
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Friends}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="objects:SteamFriend">
+                            <Border Margin="0,0,0,8" Padding="8" Background="{DynamicResource ThemeBackgroundBrush}" CornerRadius="4">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+                                    <Grid Width="32" Height="32">
+                                        <Ellipse Fill="Gray" />
+                                        <Ellipse>
+                                            <Ellipse.Fill>
+                                                <ImageBrush Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontWeight="Bold" Text="{Binding PersonaName}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Ellipse Width="8" Height="8" Fill="{Binding IsOnline, Converter={StaticResource BooleanToBrushConverter}}" />
+                                            <TextBlock Text="{Binding SteamId}" Foreground="Gray" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                                        <Button
+                                            Content="Join"
+                                            Command="{Binding #Root.DataContext.JoinCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsVisible="{Binding InSession}" />
+                                        <Button
+                                            Content="Invite"
+                                            Command="{Binding #Root.DataContext.InviteCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding IsOnline}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

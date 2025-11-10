@@ -14,6 +14,9 @@
         <DataTemplate DataType="{x:Type vm:SettingsTabViewModel}">
             <controls:SettingsTabView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:FriendsTabViewModel}">
+            <controls:FriendsTabView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type sessionVm:SessionStartViewModel}">
             <controls:SessionStart />
         </DataTemplate>
@@ -95,6 +98,9 @@
         </TabItem>
         <TabItem Header="Session">
             <ContentControl Content="{Binding SelectedSession}" />
+        </TabItem>
+        <TabItem Header="Friends">
+            <ContentControl Content="{Binding Friends}" />
         </TabItem>
         <TabItem Header="Settings">
             <ContentControl Content="{Binding Settings}" />

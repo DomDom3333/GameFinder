@@ -14,6 +14,7 @@ public class App : Application
     public static IUserConfigStore UserConfig { get; private set; } = null!;
     public static ISteamGameService SteamGameService { get; private set; } = null!;
     public static IDialogService DialogService { get; private set; } = null!;
+    public static FriendsService FriendsService { get; private set; } = null!;
     public static ApiSettings Settings { get; private set; } = new();
 
     public static void InitializeServices(IServiceProvider serviceProvider)
@@ -23,6 +24,7 @@ public class App : Application
         UserConfig = serviceProvider.GetRequiredService<IUserConfigStore>();
         SteamGameService = serviceProvider.GetRequiredService<ISteamGameService>();
         DialogService = serviceProvider.GetRequiredService<IDialogService>();
+        FriendsService = serviceProvider.GetRequiredService<FriendsService>();
         Settings = serviceProvider.GetRequiredService<ApiSettings>();
     }
     
