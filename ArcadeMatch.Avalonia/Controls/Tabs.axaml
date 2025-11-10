@@ -11,6 +11,9 @@
         <converters:IsLoggedInToBrushConverter x:Key="IsLoggedInToBrushConverter" />
     </UserControl.Resources>
     <UserControl.DataTemplates>
+        <DataTemplate DataType="{x:Type vm:SettingsTabViewModel}">
+            <controls:SettingsTabView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type sessionVm:SessionStartViewModel}">
             <controls:SessionStart />
         </DataTemplate>
@@ -74,24 +77,7 @@
             <ContentControl Content="{Binding SelectedSession}" />
         </TabItem>
         <TabItem Header="Settings">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="20">
-                    <TextBlock
-                        FontSize="20"
-                        FontWeight="Bold"
-                        HorizontalAlignment="Center"
-                        Margin="0,0,0,20"
-                        Text="Configuration" />
-                    <TextBlock Text="🔐 Steam API Key" />
-                    <TextBox Margin="0,0,0,20" Text="{Binding Home.SteamApiKey, Mode=TwoWay}" />
-                    <TextBlock Text="🆔 Steam ID" />
-                    <TextBox Margin="0,0,0,20" Text="{Binding Home.SteamId, Mode=TwoWay}" />
-                    <Button
-                        Command="{Binding Home.FetchViaApiCommand}"
-                        Content="🔄 Fetch via API"
-                        HorizontalAlignment="Center" />
-                </StackPanel>
-            </ScrollViewer>
+            <ContentControl Content="{Binding Settings}" />
         </TabItem>
     </TabControl>
 </UserControl>

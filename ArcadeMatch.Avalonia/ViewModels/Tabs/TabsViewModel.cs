@@ -12,6 +12,7 @@ public class TabsViewModel : INotifyPropertyChanged
     public TabsViewModel(ISteamGameService steamGameService, IUserConfigStore userConfig, ISessionApi sessionApi, ApiSettings settings)
     {
         Home = new HomeTabViewModel(steamGameService, userConfig);
+        Settings = new SettingsTabViewModel(Home);
         SessionStart = new SessionStartViewModel(sessionApi, userConfig);
         SessionLobby = new SessionLobbyViewModel(sessionApi, userConfig);
         Swiping = new SwipingViewModel(sessionApi, userConfig, settings);
@@ -31,6 +32,8 @@ public class TabsViewModel : INotifyPropertyChanged
     public event EventHandler<MessageRequestedEventArgs>? MessageRequested;
 
     public HomeTabViewModel Home { get; }
+
+    public SettingsTabViewModel Settings { get; }
 
     private SessionStartViewModel SessionStart { get; }
 
